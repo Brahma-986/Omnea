@@ -150,7 +150,7 @@ class ProcurementApprovalWorkflow:
         req_id = inp.request_id
         round_num = inp.round
 
-        # Upsert registered search attributes (TenantId, RequestId, ApprovalStatus, Department, EstimatedSpend)
+        # Upsert registered search attributes (TenantId, RequestId, ApprovalStatus, Department, EstimatedSpend, VendorId, NeedsHuman)
         try:
             from temporalio.common import SearchAttributeKey
             workflow.upsert_search_attributes([
@@ -159,6 +159,8 @@ class ProcurementApprovalWorkflow:
                 SearchAttributeKey.for_keyword("ApprovalStatus").value_set("in_review"),
                 SearchAttributeKey.for_keyword("Department").value_set(inp.intent.department),
                 SearchAttributeKey.for_float("EstimatedSpend").value_set(float(inp.intent.estimated_spend)),
+                SearchAttributeKey.for_keyword("VendorId").value_set(str(inp.intent.vendor_id or inp.intent.vendor_name)),
+                SearchAttributeKey.for_bool("NeedsHuman").value_set(False),
             ])
         except Exception:
             pass

@@ -86,6 +86,32 @@ async def handle_slack_action(
                 )
                 req_status = row.scalar_one_or_none()
                 if req_status in ("approved", "rejected", "failed", "cancelled"):
+                    dup_key = f"{tenant_id}:{request_id}:dup_signal:{actor_id}:{step_name}:{action}:{round_num}"
+                    exists = await session.scalar(
+                        text("SELECT id FROM approval_audit_records WHERE tenant_id = :t AND idempotency_key = :k"),
+                        {"t": tenant_id, "k": dup_key},
+                    )
+                    if not exists:
+                        await session.execute(
+                            text(
+                                "INSERT INTO approval_audit_records ("
+                                "id, tenant_id, request_id, step_id, actor_id, actor_type, "
+                                "action, verdict, reasons, evidence_ids, idempotency_key"
+                                ") VALUES ("
+                                ":id, :t, :r, NULL, :actor, 'human', "
+                                "'duplicate_signal_ignored', NULL, :reasons, '[]', :k"
+                                ")"
+                            ),
+                            {
+                                "id": uuid.uuid4(),
+                                "t": tenant_id,
+                                "r": r_uuid,
+                                "actor": actor_id,
+                                "k": dup_key,
+                                "reasons": json.dumps([f"Signal ignored because request is already decided (status={req_status})"]),
+                            },
+                        )
+                        await session.commit()
                     return {
                         "status": "already_decided",
                         "code": 200,
@@ -99,6 +125,32 @@ async def handle_slack_action(
                 )
                 step_status = step_row.scalar_one_or_none()
                 if step_status in ("approved", "rejected", "skipped", "cancelled"):
+                    dup_key = f"{tenant_id}:{request_id}:dup_signal_step:{actor_id}:{step_name}:{action}:{round_num}"
+                    exists = await session.scalar(
+                        text("SELECT id FROM approval_audit_records WHERE tenant_id = :t AND idempotency_key = :k"),
+                        {"t": tenant_id, "k": dup_key},
+                    )
+                    if not exists:
+                        await session.execute(
+                            text(
+                                "INSERT INTO approval_audit_records ("
+                                "id, tenant_id, request_id, step_id, actor_id, actor_type, "
+                                "action, verdict, reasons, evidence_ids, idempotency_key"
+                                ") VALUES ("
+                                ":id, :t, :r, NULL, :actor, 'human', "
+                                "'duplicate_signal_ignored', NULL, :reasons, '[]', :k"
+                                ")"
+                            ),
+                            {
+                                "id": uuid.uuid4(),
+                                "t": tenant_id,
+                                "r": r_uuid,
+                                "actor": actor_id,
+                                "k": dup_key,
+                                "reasons": json.dumps([f"Signal ignored because step is already decided (status={step_status})"]),
+                            },
+                        )
+                        await session.commit()
                     return {
                         "status": "already_decided",
                         "code": 200,

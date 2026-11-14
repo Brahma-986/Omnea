@@ -280,3 +280,99 @@ async def test_slack_route_already_decided_request_returns_200_no_op() -> None:
         assert "is already decided (status=approved)" in data["message"]
         print("\n[SLACK ROUTE ALREADY DECIDED IDEMPOTENCY EVIDENCE]")
         print(f"  Status: {data['status']}, Message: {data['message']}")
+
+    # Verify duplicate_signal_ignored audit record created in PostgreSQL
+    async with session_factory() as session:
+        dup_audit = (
+            await session.execute(
+                text(
+                    "SELECT actor_id, action, idempotency_key, reasons FROM approval_audit_records "
+                    "WHERE tenant_id = :t AND request_id = :id AND action = 'duplicate_signal_ignored'"
+                ),
+                {"t": tenant_id, "id": req_id},
+            )
+        ).mappings().one()
+        assert dup_audit["actor_id"] == approver_id
+        assert dup_audit["action"] == "duplicate_signal_ignored"
+        assert "Signal ignored because request is already decided" in str(dup_audit["reasons"])
+        print(f"  Verified duplicate_signal_ignored audit row recorded: key={dup_audit['idempotency_key']}")
+
+
+@pytest.mark.asyncio
+async def test_slack_route_tampered_body_returns_401() -> None:
+    """Proves: Payload altered after HMAC signature generation is rejected with HTTP 401."""
+    app = create_app()
+    settings = get_settings()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        original_body = b'{"type": "block_actions", "action": "reject"}'
+        tampered_body = b'{"type": "block_actions", "action": "approve"}'
+        ts = int(time.time())
+        sig = _generate_slack_signature(original_body, ts, settings.SLACK_SIGNING_SECRET)
+
+        resp = await client.post(
+            "/api/v1/slack/interactive",
+            content=tampered_body,
+            headers={
+                "Content-Type": "application/json",
+                "X-Slack-Request-Timestamp": str(ts),
+                "X-Slack-Signature": sig,
+            },
+        )
+        assert resp.status_code == 401
+        assert resp.json()["detail"] == "Invalid Slack signature"
+        print("\n[SLACK ROUTE TAMPERED BODY REJECTION EVIDENCE]")
+        print("  Tampered payload rejected with HTTP 401: Invalid Slack signature")
+
+
+@pytest.mark.asyncio
+async def test_slack_route_chat_update_instead_of_repost() -> None:
+    """Proves: Slack handler instructs chat.update via replace_original=True instead of posting new message."""
+    app = create_app()
+    settings = get_settings()
+    session_factory = get_async_session_factory()
+
+    tenant_id = f"t_slack_{uuid.uuid4().hex[:6]}"
+    req_id = uuid.uuid4()
+    requester_id = "alice@omnea.internal"
+    approver_id = "bob_vp@omnea.internal"
+
+    async with session_factory() as session:
+        async with session.begin():
+            await _seed_request_with_status(session, req_id, tenant_id, requester_id, "awaiting_human")
+
+    payload = {
+        "user": {"id": approver_id},
+        "container": {"message_ts": "1731518000.111222"},
+        "actions": [
+            {
+                "action_id": "approve",
+                "value": json.dumps({
+                    "tenant_id": tenant_id,
+                    "request_id": str(req_id),
+                    "requester_id": requester_id,
+                    "assigned_approver_id": approver_id,
+                    "step_name": "finance_review",
+                    "round": 1,
+                }),
+            }
+        ],
+    }
+    body = json.dumps(payload).encode("utf-8")
+    ts = int(time.time())
+    sig = _generate_slack_signature(body, ts, settings.SLACK_SIGNING_SECRET)
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        resp = await client.post(
+            "/api/v1/slack/interactive",
+            content=body,
+            headers={
+                "Content-Type": "application/json",
+                "X-Slack-Request-Timestamp": str(ts),
+                "X-Slack-Signature": sig,
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data.get("replace_original") is True
+        print("\n[SLACK ROUTE IN-PLACE UPDATE EVIDENCE]")
+        print(f"  replace_original: {data.get('replace_original')} (Slack API performs chat.update, zero reposts)")

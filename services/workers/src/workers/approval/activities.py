@@ -529,6 +529,7 @@ async def publish_outbox_event_activity(
 
 # Global mock registry for Slack messages during testing (visible message tracker)
 _MOCK_SLACK_MESSAGES: dict[str, dict[str, Any]] = {}
+_SLACK_POST_CALL_COUNT: int = 0
 
 
 @activity.defn(name="post_slack_notification_activity")
@@ -555,6 +556,9 @@ async def post_slack_notification_activity(
         if existing_ts:
             # On retry: message was already initiated/posted. Return existing ts (in-place update)
             return existing_ts
+
+    global _SLACK_POST_CALL_COUNT
+    _SLACK_POST_CALL_COUNT += 1
 
     # 2. Write pending-intent row BEFORE posting to external API (ensures durability across process crashes)
     import hashlib

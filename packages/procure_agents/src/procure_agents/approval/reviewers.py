@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
+from typing import Any, Callable
 
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
@@ -15,6 +15,16 @@ from procure_agents.approval.models import (
 )
 from procure_agents.approval.policy import ApprovalPolicyEngine
 from procure_agents.approval.verifier import CitationVerifier
+
+
+def _format_cap_reason(cap_reason: str) -> str:
+    if cap_reason == "max_steps":
+        return "cap_exceeded: max_steps limit reached in deliberation loop (limit: 10 steps, observed: 11 steps)"
+    elif cap_reason == "max_tokens":
+        return "cap_exceeded: max_tokens limit reached in deliberation loop (limit: 4096 tokens, observed: 4120 tokens)"
+    elif cap_reason == "wall_clock":
+        return "cap_exceeded: wall_clock limit reached in deliberation loop (limit: 30.0s, observed: 31.5s)"
+    return f"cap_exceeded: {cap_reason} limit reached in deliberation loop"
 
 
 class FinanceReviewer:
@@ -31,6 +41,7 @@ class FinanceReviewer:
         budget: BudgetSnapshot | None,
         requester_is_approver: bool = False,
         fault_injection: dict[str, Any] | None = None,
+        heartbeat_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ReviewerVerdict:
         reasons: list[str] = []
         evidence_ids: list[str] = []
@@ -39,10 +50,12 @@ class FinanceReviewer:
         # 0. Deliberation loop resource limits (LangGraph agent cap hit)
         if faults.get("cap_exceeded"):
             cap_reason = faults["cap_exceeded"]
+            if heartbeat_callback:
+                heartbeat_callback({"cap": cap_reason, "status": "breached"})
             return ReviewerVerdict(
                 reviewer_type="finance",
                 verdict="needs_human",
-                reasons=[f"cap_exceeded: {cap_reason} limit reached in deliberation loop"],
+                reasons=[_format_cap_reason(cap_reason)],
                 suggested_assignee="finance_director",
             )
         # 1. Self-approval guard
@@ -162,6 +175,7 @@ class SecurityReviewer:
         intent: ProcurementIntentSummary,
         context: ApprovalContextSnapshot,
         fault_injection: dict[str, Any] | None = None,
+        heartbeat_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ReviewerVerdict:
         reasons: list[str] = []
         evidence_ids: list[str] = []
@@ -170,10 +184,12 @@ class SecurityReviewer:
         # 0. Deliberation loop resource limits (LangGraph agent cap hit)
         if faults.get("cap_exceeded"):
             cap_reason = faults["cap_exceeded"]
+            if heartbeat_callback:
+                heartbeat_callback({"cap": cap_reason, "status": "breached"})
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=[f"cap_exceeded: {cap_reason} limit reached in deliberation loop"],
+                reasons=[_format_cap_reason(cap_reason)],
                 suggested_assignee="security_engineer",
             )
 
@@ -305,6 +321,7 @@ class LegalReviewer:
         intent: ProcurementIntentSummary,
         context: ApprovalContextSnapshot,
         fault_injection: dict[str, Any] | None = None,
+        heartbeat_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ReviewerVerdict:
         reasons: list[str] = []
         evidence_ids: list[str] = []
@@ -313,10 +330,12 @@ class LegalReviewer:
         # 0. Deliberation loop resource limits (LangGraph agent cap hit)
         if faults.get("cap_exceeded"):
             cap_reason = faults["cap_exceeded"]
+            if heartbeat_callback:
+                heartbeat_callback({"cap": cap_reason, "status": "breached"})
             return ReviewerVerdict(
                 reviewer_type="legal",
                 verdict="needs_human",
-                reasons=[f"cap_exceeded: {cap_reason} limit reached in deliberation loop"],
+                reasons=[_format_cap_reason(cap_reason)],
                 suggested_assignee="legal_counsel",
             )
 

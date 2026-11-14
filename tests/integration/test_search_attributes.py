@@ -21,6 +21,10 @@ from workers.approval.models import (
     BudgetSnapshot,
 )
 from workers.approval.workflows import ProcurementApprovalWorkflow
+from workers.approval.search_attributes import (
+    REQUIRED_SEARCH_ATTRIBUTES,
+    preflight_check_search_attributes,
+)
 from tests.integration.test_phase4_workflow_engine import (
     APPROVAL_WORKFLOWS,
     APPROVAL_ACTIVITIES,
@@ -62,29 +66,26 @@ async def test_workflow_fails_when_search_attribute_unregistered() -> None:
 
 
 @pytest.mark.asyncio
-async def test_all_five_search_attributes_registered_and_indexed() -> None:
-    """Proves: All 5 custom search attributes (TenantId, RequestId, ApprovalStatus, Department, EstimatedSpend)
-
-    are registered on Temporal server and successfully indexed during workflow execution.
+async def test_all_seven_search_attributes_registered_and_indexed() -> None:
+    """Proves: All 7 custom search attributes:
+      (TenantId, RequestId, ApprovalStatus, Department, EstimatedSpend, VendorId, NeedsHuman)
+    are verified by worker preflight check, registered on Temporal server, and successfully
+    indexed during workflow execution.
     """
     async with await WorkflowEnvironment.start_time_skipping() as env:
-        # 1. Register all 5 search attributes via Temporal Operator Service
-        reg_resp = await env.client.operator_service.add_search_attributes(
-            AddSearchAttributesRequest(
-                namespace="default",
-                search_attributes={
-                    "TenantId": IndexedValueType.INDEXED_VALUE_TYPE_KEYWORD,
-                    "RequestId": IndexedValueType.INDEXED_VALUE_TYPE_KEYWORD,
-                    "ApprovalStatus": IndexedValueType.INDEXED_VALUE_TYPE_KEYWORD,
-                    "Department": IndexedValueType.INDEXED_VALUE_TYPE_KEYWORD,
-                    "EstimatedSpend": IndexedValueType.INDEXED_VALUE_TYPE_DOUBLE,
-                },
-            )
-        )
-        print(f"\n[SEARCH ATTRIBUTE REGISTRATION EVIDENCE]")
-        print("  Registered: TenantId (Keyword), RequestId (Keyword), ApprovalStatus (Keyword), Department (Keyword), EstimatedSpend (Double)")
+        # 1. Run worker-startup preflight check (auto-registers all 7 search attributes)
+        preflight_result = await preflight_check_search_attributes(env.client, namespace="default")
+        assert len(preflight_result) == 7
+        assert "VendorId" in preflight_result
+        assert "NeedsHuman" in preflight_result
+        assert "EstimatedSpend" in preflight_result
 
-        # 2. Run workflow using all 5 registered search attributes
+        print(f"\n[SEARCH ATTRIBUTE PREFLIGHT & REGISTRATION EVIDENCE]")
+        print("  Preflight verified all 7 search attributes:")
+        for k, v in preflight_result.items():
+            print(f"    - {k}: {v}")
+
+        # 2. Run workflow using all 7 registered search attributes
         async with Worker(
             env.client,
             task_queue="sa-q",
@@ -130,4 +131,4 @@ async def test_all_five_search_attributes_registered_and_indexed() -> None:
             )
             res = await handle.result()
             assert res["status"] in ("approved", "expired")
-            print(f"  Workflow Execution completed successfully with all 5 Search Attributes active (status={res['status']}).")
+            print(f"  Workflow Execution completed successfully with all 7 Search Attributes active (status={res['status']}).")
