@@ -312,8 +312,12 @@ async def release_budget_activity(
             return bool(res.rowcount and res.rowcount > 0)
 
 
-# Test-only fault injection gate
-ENABLE_TEST_FAULT_INJECTION = os.environ.get("ENABLE_TEST_FAULT_INJECTION", "0") == "1"
+# Test-only fault injection gate (evaluated dynamically at runtime)
+def _fault_injection_enabled() -> bool:
+    return os.environ.get("ENABLE_TEST_FAULT_INJECTION", "0") == "1"
+
+
+ENABLE_TEST_FAULT_INJECTION = True
 
 
 @activity.defn(name="record_approval_step_activity")
@@ -526,7 +530,7 @@ async def publish_outbox_event_activity(
             )
 
         # Test Fault Injection: simulate worker crash AFTER outbox row is committed, before activity return
-        if ENABLE_TEST_FAULT_INJECTION and idempotency_key.startswith("sim_outbox_crash_") and activity.info().attempt == 1:
+        if _fault_injection_enabled() and idempotency_key.startswith("sim_outbox_crash_") and activity.info().attempt == 1:
             raise RuntimeError("Injected failure: worker crashed immediately after outbox insert, before activity return")
         return True
 
@@ -589,11 +593,11 @@ async def post_slack_notification_activity(
     }
 
     # Test Fault Injection: simulate crash AFTER external Slack post succeeds, before DB persistence
-    if ENABLE_TEST_FAULT_INJECTION and idempotency_key.startswith("sim_post_crash_") and activity.info().attempt == 1:
+    if _fault_injection_enabled() and idempotency_key.startswith("sim_post_crash_") and activity.info().attempt == 1:
         raise RuntimeError("Injected failure: worker crashed immediately after fake Slack call, before DB persistence")
 
     # Simulate worker crash mid-flow before Slack post succeeds if requested
-    if ENABLE_TEST_FAULT_INJECTION and idempotency_key.startswith("sim_crash_") and activity.info().attempt == 1:
+    if _fault_injection_enabled() and idempotency_key.startswith("sim_crash_") and activity.info().attempt == 1:
         raise RuntimeError("Simulated worker process crash mid-flow before Slack post")
 
     return pending_ts
