@@ -771,6 +771,8 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
         # Worker 1 is killed mid-flow after fake Slack call returned ts
         print(f"\n[REAL WORKER SHUTDOWN & RESTART TEST 05]")
         print("  Worker 1 killed after reviewer completion and immediately after fake Slack call.")
+        # In-memory cache is wiped out (simulating fresh process startup for Worker 2)
+        _MOCK_SLACK_MESSAGES.clear()
 
         # 2. Spin up Worker 2 on same task queue (resumes workflow execution)
         async with Worker(

@@ -133,4 +133,16 @@ async def test_admin_cannot_update_or_delete_audit_table() -> None:
     # DELETE is blocked
     await check_admin_blocked("DELETE FROM approval_audit_records;")
 
+    # TRUNCATE on approval_audit_records is blocked
+    await check_admin_blocked("TRUNCATE TABLE approval_audit_records;")
+
+    # TRUNCATE on audit_log is blocked
+    await check_admin_blocked("TRUNCATE TABLE audit_log;")
+
+    # UPDATE on audit_log is blocked
+    await check_admin_blocked("UPDATE audit_log SET actor = 'tampered';")
+
+    # DELETE on audit_log is blocked
+    await check_admin_blocked("DELETE FROM audit_log;")
+
     await engine.dispose()

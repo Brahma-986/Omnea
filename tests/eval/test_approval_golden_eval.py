@@ -247,19 +247,19 @@ def test_golden_eval_91_cases_confusion_and_wilson_bounds() -> None:
     assert always_hmn_auto_approvals < len(clear_autonomous), "AlwaysNeedsHumanStub must fail auto-approval gate"
 
 
-def test_canary_eval_16_cases() -> None:
-    """Run post-freeze canary evaluation over 16 unseen vendor/edge cases."""
+def test_canary_eval_26_cases() -> None:
+    """Run post-freeze canary evaluation over 26 unseen vendor/edge cases (including 10 adversarial boundary probes)."""
     canary_path = Path("tests/eval/canary_cases.jsonl")
     assert canary_path.exists(), "tests/eval/canary_cases.jsonl must exist"
 
     with canary_path.open("r", encoding="utf-8") as f:
         cases = [json.loads(line) for line in f if line.strip()]
-    assert len(cases) == 16, f"Expected 16 canary cases, got {len(cases)}"
+    assert len(cases) == 26, f"Expected 26 canary cases, got {len(cases)}"
 
     print("\n" + "=" * 95)
-    print("PHASE 4 POST-FREEZE CANARY EVALUATION (16 CASES)")
+    print("PHASE 4 POST-FREEZE CANARY EVALUATION (26 CASES INCLUDING 10 ADVERSARIAL PROBES)")
     print("=" * 95)
-    print(f"{'Case ID':<35} {'Category':<16} {'Expected':<15} {'Actual':<15} {'Match':<6}")
+    print(f"{'Case ID':<45} {'Category':<20} {'Expected':<15} {'Actual':<15} {'Match':<6}")
     print("-" * 95)
 
     matches = 0
@@ -271,10 +271,10 @@ def test_canary_eval_16_cases() -> None:
         if match:
             matches += 1
         actual_results.append({"expected": exp, "actual": act, "must_not": c["must_not_auto_approve"]})
-        print(f"{c['case_id']:<35} {c['category']:<16} {exp:<15} {act:<15} {'YES' if match else 'NO'}")
+        print(f"{c['case_id']:<45} {c['category']:<20} {exp:<15} {act:<15} {'YES' if match else 'NO'}")
 
     print("-" * 95)
-    print(f"CANARY TOTAL: {matches}/16 MATCHES ({matches/16*100.0:.1f}%)")
+    print(f"CANARY TOTAL: {matches}/26 MATCHES ({matches/26*100.0:.1f}%)")
     print("=" * 95)
 
     clear_canaries = [r for r in actual_results if r["expected"] == "approved"]
@@ -286,7 +286,7 @@ def test_canary_eval_16_cases() -> None:
     print(f"Canary Auto-Approval Rate : {auto_canaries}/{len(clear_canaries)} ({auto_canaries/len(clear_canaries)*100:.1f}%) -> Wilson: [{w_low_c*100:.1f}%, {w_up_c*100:.1f}%]")
     print(f"Canary False-Approvals    : {false_canaries}/{len(must_not_canaries)} (0.00%)")
 
-    assert matches == 16, f"Expected 16/16 canary matches, got {matches}/16"
+    assert matches == 26, f"Expected 26/26 canary matches, got {matches}/26"
     assert false_canaries == 0, f"Expected 0 false approvals on canary set, got {false_canaries}"
 
 

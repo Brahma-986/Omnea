@@ -1453,6 +1453,211 @@ def generate_canary_cases() -> list[dict]:
         )
     )
 
+    # =========================================================================
+    # 10 Adversarial Boundary Cases (Period edges, Merged vendor, Stale period, Boundary dates, Headroom penny)
+    # =========================================================================
+    cases.append(
+        make_case(
+            case_id="canary_17_adv_period_edge_q4_to_q1",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Period edge: FY2025-Q4 requested but active budget is FY2026",
+            spend=15000.0,
+            annualized=15000.0,
+            currency="USD",
+            dept="Engineering",
+            vendor="QuarterEdge SaaS",
+            budget_amt=100000.0,
+            budget_comm=10000.0,
+            budget_period="FY2026",
+            tags=["fiscal_year_mismatch"],
+            expected_finance="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+            fault_injection={"period_mismatch": "FY2025-Q4 vs FY2026"},
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_18_adv_merged_vendor_spend_parent_rollup",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Merged vendor spend rollup exceeds parent group approval ceiling",
+            spend=60000.0,
+            annualized=60000.0,
+            currency="USD",
+            dept="Engineering",
+            vendor="Subsidiary Tool Inc (Merged into MegaCorp)",
+            budget_amt=200000.0,
+            budget_comm=20000.0,
+            policy_vp_threshold=50000.0,
+            expected_finance="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+            tags=["merged_parent_spend_rollup"],
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_19_adv_currency_eur_budget_stale_period_2024",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Currency is EUR with EUR budget, but budget period is expired FY2024",
+            spend=12000.0,
+            annualized=12000.0,
+            currency="EUR",
+            dept="Finance",
+            vendor="EuroStale Analytics",
+            budget_amt=80000.0,
+            budget_comm=5000.0,
+            budget_period="FY2024",
+            tags=["fiscal_year_mismatch"],
+            expected_finance="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+            fault_injection={"stale_budget_period": "FY2024"},
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_20_adv_boundary_date_contract_expired_yesterday",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Boundary date: Contract end_date was yesterday (2026-11-12 vs as_of 2026-11-13)",
+            spend=18000.0,
+            annualized=18000.0,
+            currency="USD",
+            dept="Legal",
+            vendor="ExpiredYesterday Corp",
+            budget_amt=100000.0,
+            budget_comm=10000.0,
+            active_contract=False,
+            expected_legal="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_21_adv_boundary_date_contract_starts_tomorrow",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Boundary date: Contract start_date is tomorrow (2026-11-14 vs as_of 2026-11-13)",
+            spend=14000.0,
+            annualized=14000.0,
+            currency="USD",
+            dept="Marketing",
+            vendor="FutureContract LLC",
+            budget_amt=90000.0,
+            budget_comm=10000.0,
+            active_contract=False,
+            expected_legal="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+            fault_injection={"contract_not_started": "start_date=2026-11-14"},
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_22_adv_headroom_off_by_one_cent",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Headroom off-by-one penny: spend is 10000.01 with 10000.00 headroom remaining",
+            spend=10000.01,
+            annualized=10000.01,
+            currency="USD",
+            dept="Engineering",
+            vendor="PennyOver Cloud",
+            budget_amt=100000.0,
+            budget_comm=90000.0,
+            expected_finance="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_23_adv_stale_security_review_day_366",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Boundary date: SOC2 review is exactly 366 days old (> 365 max threshold)",
+            spend=20000.0,
+            annualized=20000.0,
+            currency="USD",
+            dept="Security",
+            vendor="Day366Sec Ltd",
+            budget_amt=120000.0,
+            budget_comm=15000.0,
+            audit_period_end="2025-11-12",
+            sec_freshness="stale",
+            sec_is_fresh=False,
+            expected_security="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_24_adv_delegate_window_expired_by_one_second",
+            category="canary_adversarial",
+            path="reviewer",
+            desc="Delegate approver window expired 1 second prior to request snapshot as_of",
+            spend=16000.0,
+            annualized=16000.0,
+            currency="USD",
+            dept="Product",
+            vendor="DelegateEdge Tools",
+            budget_amt=100000.0,
+            budget_comm=10000.0,
+            actor="delegate_expired",
+            requester="delegate_expired",
+            fault_injection={"requester_is_approver": True},
+            expected_finance="needs_human",
+            expected_status="awaiting_human",
+            must_not_auto_approve=True,
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_25_adv_department_over_cap_hard_reject",
+            category="canary_reject",
+            path="reviewer",
+            desc="Hard reject: Spend 150,000 pushes committed spend to 250,000 on 100,000 budget",
+            spend=150000.0,
+            annualized=150000.0,
+            currency="USD",
+            dept="Engineering",
+            vendor="MassiveOverspend Inc",
+            budget_amt=100000.0,
+            budget_comm=100000.0,
+            policy_over_budget="auto_reject",
+            expected_finance="reject",
+            expected_status="rejected",
+            is_smoke_test=True,
+            must_not_auto_approve=True,
+        )
+    )
+    cases.append(
+        make_case(
+            case_id="canary_26_adv_sanctioned_entity_hidden_in_alias",
+            category="canary_reject",
+            path="reviewer",
+            desc="Hard reject: Clean-looking vendor has alias in metadata matching sanctioned SDN entity",
+            spend=45000.0,
+            annualized=45000.0,
+            currency="USD",
+            dept="Legal",
+            vendor="InnocuousTrading Ltd",
+            budget_amt=150000.0,
+            budget_comm=20000.0,
+            tags=["sanctioned_entity"],
+            expected_legal="reject",
+            expected_status="rejected",
+            is_smoke_test=True,
+            must_not_auto_approve=True,
+        )
+    )
+
     return cases
 
 

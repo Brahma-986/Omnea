@@ -527,7 +527,7 @@ async def publish_outbox_event_activity(
             return True
 
 
-# Global mock registry for Slack messages during testing
+# Global mock registry for Slack messages during testing (visible message tracker)
 _MOCK_SLACK_MESSAGES: dict[str, dict[str, Any]] = {}
 
 
@@ -539,32 +539,43 @@ async def post_slack_notification_activity(
     text_content: str,
     idempotency_key: str,
 ) -> str:
-    """Post interactive message to Slack. Idempotent per key; returns deterministic or generated slack_ts."""
-    msg_key = f"{tenant_id}:{request_id_str}:{step_name}:{idempotency_key}"
-
-    # 1. Slack Activity Idempotency Check: check in-memory registry or database
-    if msg_key in _MOCK_SLACK_MESSAGES:
-        # Message was already posted externally. Idempotent reuse / in-place update
-        _MOCK_SLACK_MESSAGES[msg_key]["updated"] = True
-        return _MOCK_SLACK_MESSAGES[msg_key]["ts"]
-
+    """Post interactive message to Slack. Idempotent via DB pending intent; returns deterministic slack_ts."""
     session_factory = get_async_session_factory()
-    try:
-        req_uuid = uuid.UUID(request_id_str)
-        async with session_factory() as session:
-            db_ts = await session.scalar(
-                text("SELECT slack_message_ts FROM approval_steps WHERE tenant_id = :t AND request_id = :r AND step_name = :s"),
-                {"t": tenant_id, "r": req_uuid, "s": step_name},
-            )
-            if db_ts:
-                return db_ts
-    except Exception:
-        pass
+    req_uuid = uuid.UUID(request_id_str)
 
-    # External Slack API post
-    ts = f"1710000000.{len(_MOCK_SLACK_MESSAGES) + 1:06d}"
+    # 1. Slack Idempotency Guard: Look up existing message from database on retry
+    async with session_factory() as session:
+        existing_ts = await session.scalar(
+            text(
+                "SELECT slack_message_ts FROM approval_steps "
+                "WHERE tenant_id = :t AND request_id = :r AND step_name = :s AND slack_message_ts IS NOT NULL"
+            ),
+            {"t": tenant_id, "r": req_uuid, "s": step_name},
+        )
+        if existing_ts:
+            # On retry: message was already initiated/posted. Return existing ts (in-place update)
+            return existing_ts
+
+    # 2. Write pending-intent row BEFORE posting to external API (ensures durability across process crashes)
+    import hashlib
+    ts_hash = int(hashlib.sha256(f"{tenant_id}:{request_id_str}:{step_name}:{idempotency_key}".encode("utf-8")).hexdigest()[:8], 16) % 1000000
+    pending_ts = f"1710000000.{ts_hash:06d}"
+
+    async with session_factory() as session:
+        async with session.begin():
+            await session.execute(
+                text(
+                    "INSERT INTO approval_steps (id, tenant_id, request_id, step_name, round, reviewer_type, status, slack_message_ts) "
+                    "VALUES (:id, :t, :r, :s, 1, 'agent', 'awaiting_human', :ts) "
+                    "ON CONFLICT (tenant_id, request_id, step_name, round) DO UPDATE "
+                    "SET slack_message_ts = COALESCE(approval_steps.slack_message_ts, EXCLUDED.slack_message_ts)"
+                ),
+                {"id": uuid.uuid4(), "t": tenant_id, "r": req_uuid, "s": step_name, "ts": pending_ts},
+            )
+
+    msg_key = f"{tenant_id}:{request_id_str}:{step_name}"
     _MOCK_SLACK_MESSAGES[msg_key] = {
-        "ts": ts,
+        "ts": pending_ts,
         "text": text_content,
         "updated": False,
     }
@@ -577,7 +588,7 @@ async def post_slack_notification_activity(
     if ENABLE_TEST_FAULT_INJECTION and idempotency_key.startswith("sim_crash_") and activity.info().attempt == 1:
         raise RuntimeError("Simulated worker process crash mid-flow before Slack post")
 
-    return ts
+    return pending_ts
 
 
 @activity.defn(name="update_slack_notification_activity")
