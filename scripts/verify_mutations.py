@@ -135,7 +135,7 @@ def main() -> None:
             "pytest_args": [
                 "tests/integration/test_phase4_workflow_engine.py",
                 "-k",
-                "test_05_worker_crash_and_resume_idempotency",
+                "test_05b_outbox_worker_crash_and_resume_idempotency",
                 "-q",
             ],
         },

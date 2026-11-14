@@ -856,6 +856,94 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
         assert act_mod._SLACK_POST_CALL_COUNT == 1, f"Expected exactly 1 external Slack API call, got {act_mod._SLACK_POST_CALL_COUNT}"
 
 
+@pytest.mark.asyncio
+async def test_05b_outbox_worker_crash_and_resume_idempotency() -> None:
+    """Proves: Worker crash immediately after inserting outbox event (before activity completes);
+    Worker 2 retry relies on application-level idempotency guard to prevent duplicate outbox insert.
+    With guard disabled, PostgreSQL uq_domain_event_idempotency fails with UniqueViolationError.
+    """
+    async with await WorkflowEnvironment.start_local() as env:
+        await register_search_attributes(env.client)
+        session_factory = get_async_session_factory()
+        tenant_id = f"t_t5b_{uuid.uuid4().hex[:6]}"
+        req_id = uuid.uuid4()
+        requester_id = "usr_outbox_crash"
+        await _seed_test_data(tenant_id, req_id, requester_id=requester_id)
+
+        inp = ApprovalWorkflowInput(
+            tenant_id=tenant_id,
+            request_id=str(req_id),
+            requester_id=requester_id,
+            round=1,
+            intent=ProcurementIntentSummary(
+                request_id=str(req_id),
+                requester_id=requester_id,
+                department="Engineering",
+                vendor_name="OutboxResistant",
+                estimated_spend=Decimal("60000.00"),
+                annualized_spend=Decimal("60000.00"),
+                currency="USD",
+                justification="Outbox crash resilience test",
+            ),
+            context=ApprovalContextSnapshot(
+                snapshot_hash="h_outbox_crash",
+                as_of="2026-11-13T00:00:00Z",
+                citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
+                security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+            ),
+            policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
+            budget=BudgetSnapshot(
+                department="Engineering",
+                currency="USD",
+                period="FY2026",
+                amount=Decimal("100000.00"),
+                committed=Decimal("0.00"),
+            ),
+            fault_injection={"simulate_outbox_crash": True},
+            t1_seconds=1000,
+            t2_seconds=2000,
+            t3_seconds=3000,
+        )
+
+        wf_id = f"{tenant_id}:{req_id}"
+        os.environ["ENABLE_TEST_FAULT_INJECTION"] = "1"
+
+        async with Worker(
+            env.client,
+            task_queue="outbox-crash-q",
+            workflows=APPROVAL_WORKFLOWS,
+            activities=APPROVAL_ACTIVITIES,
+            identity="worker-outbox-1",
+        ):
+            handle = await env.client.start_workflow(
+                ProcurementApprovalWorkflow.run,
+                inp.model_dump(mode="json"),
+                id=wf_id,
+                task_queue="outbox-crash-q",
+            )
+            # Signal human approve -> triggers outbox insertion and simulated crash on attempt 1
+            auth_sig = HumanDecisionSignal(
+                actor_id="vp_finance",
+                step_name="finance_review",
+                action="approve",
+                idempotency_key=f"{tenant_id}:{req_id}:sig_outbox_resume",
+            )
+            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            # Wait for attempt 1 crash and activity retry under idempotency guard
+            res = await handle.result()
+            assert res["status"] == "approved"
+
+        # Verify exactly one outbox event in PostgreSQL
+        async with session_factory() as session:
+            outbox_count = await session.scalar(
+                text("SELECT count(*) FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                {"t": tenant_id, "id": str(req_id)},
+            )
+            assert outbox_count == 1, f"Expected exactly 1 outbox event, got {outbox_count}"
+            print(f"\n[OUTBOX WORKER CRASH IDEMPOTENCY EVIDENCE]")
+            print(f"  Outbox rows in DB: {outbox_count} (zero duplicate outbox events across crash retry)")
+
+
 # =============================================================================
 # TEST 6: Duplicate Workflow Start (Queue Redelivery)
 # =============================================================================

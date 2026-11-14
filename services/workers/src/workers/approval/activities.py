@@ -524,6 +524,9 @@ async def publish_outbox_event_activity(
                     "payload": json.dumps(payload),
                 },
             )
+            # Test Fault Injection: simulate worker crash AFTER outbox row is committed, before activity return
+            if ENABLE_TEST_FAULT_INJECTION and idempotency_key.startswith("sim_outbox_crash_") and activity.info().attempt == 1:
+                raise RuntimeError("Injected failure: worker crashed immediately after outbox insert, before activity return")
             return True
 
 

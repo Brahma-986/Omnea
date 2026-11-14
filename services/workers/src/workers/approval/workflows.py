@@ -578,7 +578,7 @@ class ProcurementApprovalWorkflow:
                             args=[tenant_id, req_id, "approved"],
                             start_to_close_timeout=timedelta(seconds=15),
                         )
-                        outbox_key = f"{tenant_id}:{req_id}:outbox:approved:{round_num}"
+                        outbox_key = f"sim_outbox_crash_{tenant_id}:{req_id}:outbox:approved:{round_num}" if inp.fault_injection.get("simulate_outbox_crash") else f"{tenant_id}:{req_id}:outbox:approved:{round_num}"
                         await workflow.execute_activity(
                             publish_outbox_event_activity,
                             args=[tenant_id, req_id, "request.approved", {"approved_by": hd.actor_id}, outbox_key],
