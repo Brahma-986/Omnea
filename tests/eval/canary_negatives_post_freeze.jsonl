@@ -1,0 +1,28 @@
+{"query_id": "canary_001", "query_name": "Salesforce Ventures LLC", "target_family": "Salesforce", "expected_not_autolink": true}
+{"query_id": "canary_002", "query_name": "Workday Security Systems", "target_family": "Workday", "expected_not_autolink": true}
+{"query_id": "canary_003", "query_name": "ServiceNow Technologies Asia", "target_family": "ServiceNow", "expected_not_autolink": true}
+{"query_id": "canary_004", "query_name": "MongoDB Consulting Group", "target_family": "MongoDB", "expected_not_autolink": true}
+{"query_id": "canary_005", "query_name": "Palantir Analytics Solutions", "target_family": "Palantir", "expected_not_autolink": true}
+{"query_id": "canary_006", "query_name": "Twilio Communications Labs", "target_family": "Twilio", "expected_not_autolink": true}
+{"query_id": "canary_007", "query_name": "HubSpot Marketing Partners", "target_family": "HubSpot", "expected_not_autolink": true}
+{"query_id": "canary_008", "query_name": "Confluent Streaming Data LLC", "target_family": "Confluent", "expected_not_autolink": true}
+{"query_id": "canary_009", "query_name": "Elasticsearch Enterprise Systems", "target_family": "Elastic", "expected_not_autolink": true}
+{"query_id": "canary_010", "query_name": "PagerDuty Incident Labs", "target_family": "PagerDuty", "expected_not_autolink": true}
+{"query_id": "canary_011", "query_name": "Okta Security Operations", "target_family": "Okta", "expected_not_autolink": true}
+{"query_id": "canary_012", "query_name": "HashiCorp Cloud Tools", "target_family": "HashiCorp", "expected_not_autolink": true}
+{"query_id": "canary_013", "query_name": "GitLab DevOps Services", "target_family": "GitLab", "expected_not_autolink": true}
+{"query_id": "canary_014", "query_name": "Figma Design Studio Inc", "target_family": "Figma", "expected_not_autolink": true}
+{"query_id": "canary_015", "query_name": "Notion Workspace Labs", "target_family": "Notion", "expected_not_autolink": true}
+{"query_id": "canary_016", "query_name": "Airtable Data Systems", "target_family": "Airtable", "expected_not_autolink": true}
+{"query_id": "canary_017", "query_name": "Miro Collaboration Tools", "target_family": "Miro", "expected_not_autolink": true}
+{"query_id": "canary_018", "query_name": "Asana Project Services", "target_family": "Asana", "expected_not_autolink": true}
+{"query_id": "canary_019", "query_name": "Monday Software Labs", "target_family": "Monday.com", "expected_not_autolink": true}
+{"query_id": "canary_020", "query_name": "Zapier Automations Group", "target_family": "Zapier", "expected_not_autolink": true}
+{"query_id": "canary_021", "query_name": "Zoom Video Communications 2", "target_family": "Zoom", "expected_not_autolink": true}
+{"query_id": "canary_022", "query_name": "Atlassian Jira Operations", "target_family": "Atlassian", "expected_not_autolink": true}
+{"query_id": "canary_023", "query_name": "DocuSign Enterprise Labs", "target_family": "DocuSign", "expected_not_autolink": true}
+{"query_id": "canary_024", "query_name": "Shopify Commerce Systems", "target_family": "Shopify", "expected_not_autolink": true}
+{"query_id": "canary_025", "query_name": "Stripe Financial Technologies 2", "target_family": "Stripe", "expected_not_autolink": true}
+{"query_id": "canary_026", "query_name": "Box Cloud Storage Solutions", "target_family": "Box", "expected_not_autolink": true}
+{"query_id": "canary_027", "query_name": "Splunk Analytics Labs", "target_family": "Splunk", "expected_not_autolink": true}
+{"query_id": "canary_028", "query_name": "Databricks Data Engineering", "target_family": "Databricks", "expected_not_autolink": true}

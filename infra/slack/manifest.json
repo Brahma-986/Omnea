@@ -1,0 +1,48 @@
+{
+  "display_information": {
+    "name": "Omnea Procurement OS",
+    "description": "AI-native enterprise procurement orchestration platform",
+    "background_color": "#1e293b"
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "ProcureBot",
+      "always_online": true
+    },
+    "slash_commands": [
+      {
+        "command": "/procure",
+        "url": "https://api.omnea.internal/api/v1/ingress/slack/commands",
+        "description": "Initiate or query procurement requests",
+        "usage_hint": "[request summary | status <id>]",
+        "should_escape": false
+      }
+    ]
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "app_mentions:read",
+        "channels:history",
+        "chat:write",
+        "commands",
+        "files:read",
+        "im:history",
+        "im:read",
+        "im:write"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "request_url": "https://api.omnea.internal/api/v1/ingress/slack/events",
+      "bot_events": [
+        "app_mention",
+        "message.im"
+      ]
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "token_rotation_enabled": false
+  }
+}

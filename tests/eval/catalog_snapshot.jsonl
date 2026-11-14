@@ -1,0 +1,263 @@
+{"id": "b1d7e5dd-9cfd-5b52-b536-1ba9793c7ee8", "name": "Datadog, Inc.", "family": "Datadog", "split": "dev", "aliases": ["Datadog"], "parent_id": null, "status": "active"}
+{"id": "683498a4-b7b7-5893-a8dd-7f06b35747a4", "name": "SAP SE", "family": "SAP", "split": "dev", "aliases": ["SAP"], "parent_id": null, "status": "active"}
+{"id": "06053410-8c33-550f-8bdf-58662e88f70a", "name": "Cisco Systems, Inc.", "family": "Cisco", "split": "dev", "aliases": ["Cisco"], "parent_id": null, "status": "active"}
+{"id": "3e88dc26-b030-5bc9-80bf-0c19227593e9", "name": "Sysco Corporation", "family": "Sysco", "split": "dev", "aliases": ["Sysco"], "parent_id": null, "status": "active"}
+{"id": "39168de5-ce75-5af7-9a61-e017ee917647", "name": "Amazon Web Services, Inc.", "family": "Amazon", "split": "dev", "aliases": ["AWS", "Amazon AWS"], "parent_id": null, "status": "active"}
+{"id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "name": "Google LLC", "family": "Google", "split": "dev", "aliases": ["Google", "GCP", "Google Cloud"], "parent_id": null, "status": "active"}
+{"id": "ab455759-c0ce-5fc1-93ec-6e0aba8938f6", "name": "Box, Inc.", "family": "Box", "split": "dev", "aliases": ["Box"], "parent_id": null, "status": "active"}
+{"id": "b8602a0a-4afc-50b1-8e83-967a83b9d2e3", "name": "Fox Corporation", "family": "Fox", "split": "dev", "aliases": ["Fox"], "parent_id": null, "status": "active"}
+{"id": "f02332e6-97ac-5d9f-afdb-ad75a2135902", "name": "Studio 2", "family": "Studio", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "408a0381-b51d-5df2-8b90-966bfab74422", "name": "HubSpot, Inc.", "family": "HubSpot", "split": "dev", "aliases": ["Hubspot"], "parent_id": null, "status": "active"}
+{"id": "06224268-d110-5b04-b761-f183a2dc8fce", "name": "Twilio Inc.", "family": "Twilio", "split": "dev", "aliases": ["Twilio"], "parent_id": null, "status": "active"}
+{"id": "3a32c6a3-35a6-52bf-af82-4ba0435ff7c5", "name": "Figma, LLC", "family": "Figma", "split": "dev", "aliases": ["Figma"], "parent_id": null, "status": "active"}
+{"id": "5941a7e3-b2ba-568d-b741-9bb189894c15", "name": "Snowflake, Inc.", "family": "Snowflake", "split": "dev", "aliases": ["Snowflake"], "parent_id": null, "status": "active"}
+{"id": "f0225bc3-5094-530f-ad90-d1b5aea8c5dd", "name": "Atlassian Pty Ltd", "family": "Atlassian", "split": "dev", "aliases": ["Atlassian"], "parent_id": null, "status": "active"}
+{"id": "45b08b96-1caa-5055-b063-b8534ffacf2f", "name": "Zoom Video Communications, Inc.", "family": "Zoom", "split": "dev", "aliases": ["Zoom", "Zoom Video"], "parent_id": null, "status": "active"}
+{"id": "cd273432-5029-5b77-b073-5b4bbdea297d", "name": "ZoomInfo Technologies LLC", "family": "ZoomInfo", "split": "dev", "aliases": ["ZoomInfo"], "parent_id": null, "status": "active"}
+{"id": "c0a82ba3-3594-5ff7-b70d-69a652aee733", "name": "Zenith Technologies Ltd", "family": "Zenith", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "996a1ed7-7d64-5513-a8ff-917441010a0f", "name": "SaaS Labs Inc", "family": "SaaS Labs", "split": "dev", "aliases": ["SaaS Labs"], "parent_id": null, "status": "active"}
+{"id": "a3236201-52e2-5c22-9068-700184c2184e", "name": "Fastly, Inc.", "family": "Fastly", "split": "dev", "aliases": ["Fastly"], "parent_id": null, "status": "active"}
+{"id": "6e7a92c1-9117-567b-af9a-008fc42141b5", "name": "Dynatrace LLC", "family": "Dynatrace", "split": "dev", "aliases": ["Dynatrace"], "parent_id": null, "status": "active"}
+{"id": "c3736a76-e9e2-5fe3-969a-ef5ecac08a1c", "name": "Datadog EMEA", "family": "Datadog", "split": "dev", "aliases": [], "parent_id": "b1d7e5dd-9cfd-5b52-b536-1ba9793c7ee8", "status": "active"}
+{"id": "0ae5c1f5-2d19-5e26-8075-6a2c90cb0caa", "name": "Google UK", "family": "Google", "split": "dev", "aliases": [], "parent_id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "status": "active"}
+{"id": "47e4e673-3995-553e-a977-0e7296e2d71e", "name": "Google APAC", "family": "Google", "split": "dev", "aliases": [], "parent_id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "status": "active"}
+{"id": "508ed061-fa19-55f0-b187-2b59c5845a9b", "name": "Cisco International Ltd", "family": "Cisco", "split": "dev", "aliases": [], "parent_id": "06053410-8c33-550f-8bdf-58662e88f70a", "status": "active"}
+{"id": "1f2ee021-d1fa-56bd-abc5-6c8ceea0145c", "name": "Anaplan Inc", "family": "Distractor_Anaplan Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ad6a4f4f-48a9-5202-bcaa-0959f8adecbe", "name": "Splunk Services LLC", "family": "Distractor_Splunk Services LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "53b03e54-fb7d-52c4-92b5-2089bfebe5dc", "name": "Zscaler Technologies", "family": "Distractor_Zscaler Technologies", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8d27f5b2-9017-55ad-9f44-749e8c3a63eb", "name": "Netskope Inc", "family": "Distractor_Netskope Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1a6c1292-f442-50bf-b713-3b36bef494e2", "name": "Mimecast North America", "family": "Distractor_Mimecast North America", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ef8f4e10-5f31-56da-a1b9-a11b8f01a8cd", "name": "Proofpoint Systems", "family": "Distractor_Proofpoint Systems", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "c6750da8-4701-5a59-9e6b-b97534916cc4", "name": "Qualys Security Inc", "family": "Distractor_Qualys Security Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d2d85063-85d6-5e75-9118-c90828f7587a", "name": "Tenable Network Security", "family": "Distractor_Tenable Network Security", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "c3d51a6f-d496-5fee-aefc-f4a1e931ec86", "name": "Rapid7 LLC", "family": "Distractor_Rapid7 LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "90242582-c346-5129-9d82-6bd26bb25a1c", "name": "Varonis Systems", "family": "Distractor_Varonis Systems", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "fabe848a-03a3-542e-b305-36d3559e098f", "name": "CyberArk Software", "family": "Distractor_CyberArk Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ae336bc7-343c-5dfd-8949-0d98b49137c7", "name": "SailPoint Technologies", "family": "Distractor_SailPoint Technologies", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9c28751f-dbf5-5cd6-a856-9e883f390a52", "name": "Ping Identity Corp", "family": "Distractor_Ping Identity Corp", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "255f9c49-029f-5c5b-b2f8-53a1a3f20d80", "name": "ForgeRock Inc", "family": "Distractor_ForgeRock Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "49ba08c1-e0c5-548f-a996-92b6966519d1", "name": "OneLogin LLC", "family": "Distractor_OneLogin LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0b231b3b-a2f1-5e89-b5f7-6d670be22e92", "name": "Auth0 Inc", "family": "Distractor_Auth0 Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9a2a5620-235a-57d5-bb93-fd7e9a948472", "name": "Duo Security", "family": "Distractor_Duo Security", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7d63338a-1703-5278-aff9-23ec4e451f7d", "name": "Lookout Mobile", "family": "Distractor_Lookout Mobile", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "407529dd-5c42-576d-b3a1-89576fef3a9b", "name": "SentinelOne Inc", "family": "Distractor_SentinelOne Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7284a0d1-94ee-55b0-93e5-5cad51ac5657", "name": "Cybereason Inc", "family": "Distractor_Cybereason Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "40f1c283-7aed-5048-80e5-3116405aa225", "name": "Deep Instinct", "family": "Distractor_Deep Instinct", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d4a0835a-6e44-5a14-aa24-8b5f5a21598e", "name": "Bitdefender LLC", "family": "Distractor_Bitdefender LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d2285848-cf9b-5def-890b-9b70b4b63e2e", "name": "Sophos Group", "family": "Distractor_Sophos Group", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "08a65143-31d6-5c47-94fa-de5784959cdd", "name": "Kaspersky Labs", "family": "Distractor_Kaspersky Labs", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "b56048ef-5d51-5bfa-8f93-715c8eac7be4", "name": "Trend Micro Inc", "family": "Distractor_Trend Micro Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "703a3fe3-b0c8-5324-9edb-23bf6375f217", "name": "F-Secure Corp", "family": "Distractor_F-Secure Corp", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "4c32fff4-be5f-50a7-8fac-d3759b5f91e1", "name": "Check Point Software", "family": "Distractor_Check Point Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d28cd012-db00-564c-ae0f-87aa430512a2", "name": "Palo Alto Networks", "family": "Distractor_Palo Alto Networks", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1137fa79-eb09-5789-a3fe-ab16826e5edd", "name": "Fortinet Technologies", "family": "Distractor_Fortinet Technologies", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e4e5871b-c062-5578-b0d0-3a6f091b3665", "name": "SonicWall Inc", "family": "Distractor_SonicWall Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "c51d90e0-ef7d-5154-8a7d-985ef442deec", "name": "WatchGuard Technologies", "family": "Distractor_WatchGuard Technologies", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "17eced53-81ec-54b7-9116-f92bca0a02c1", "name": "Barracuda Networks", "family": "Distractor_Barracuda Networks", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e6c2d0ac-4cdb-58c9-b21b-448ec5a62318", "name": "F5 Networks", "family": "Distractor_F5 Networks", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "52f10298-6238-5615-925d-44fec2aa2ea2", "name": "Citrix Systems", "family": "Distractor_Citrix Systems", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1091838d-5e74-57eb-8d73-7fb6abdacdd8", "name": "VMware LLC", "family": "Distractor_VMware LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a892afe9-9524-5b0c-abb4-630d56cdf773", "name": "Nutanix Inc", "family": "Distractor_Nutanix Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "65fb9df0-63ce-552d-9c4f-82051b8de880", "name": "Pure Storage", "family": "Distractor_Pure Storage", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "b261c965-c3cd-5ac4-b970-cf8c61405042", "name": "NetApp Inc", "family": "Distractor_NetApp Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ab16312a-f738-5897-88d2-e242d0a2d9ad", "name": "Cohesity Inc", "family": "Distractor_Cohesity Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "04030244-9e03-5a2d-9508-d961dfd218d8", "name": "Rubrik Inc", "family": "Distractor_Rubrik Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1dfd7136-0d91-5583-90d6-5b0d952b51a3", "name": "Veeam Software", "family": "Distractor_Veeam Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7185d78e-b1e9-5a38-8a95-9e534b9c2ea6", "name": "Commvault Systems", "family": "Distractor_Commvault Systems", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "44f282d9-9025-5fec-afba-d15072150cb8", "name": "Veritas Technologies", "family": "Distractor_Veritas Technologies", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "77e62ffb-efd3-5db1-abb9-3056b825896b", "name": "Datto Inc", "family": "Distractor_Datto Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a5b49cd0-1fe1-5161-8e8c-375b5a002ef1", "name": "Acronis International", "family": "Distractor_Acronis International", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "154e1ecd-e380-5f9c-a889-be13e4ddfa66", "name": "Carbonite Inc", "family": "Distractor_Carbonite Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a0a9313c-d498-53e6-bbaf-fa457c7b3add", "name": "Backblaze LLC", "family": "Distractor_Backblaze LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "67a7ffcb-c02f-5920-9fcc-2aadc49b3b6d", "name": "Druva Inc", "family": "Distractor_Druva Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "618106de-063e-50c5-8f58-6bf4abf493d0", "name": "Clumio Inc", "family": "Distractor_Clumio Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "3761446e-a9c7-5d86-a0a2-bedf4c6538f1", "name": "HYCU Inc", "family": "Distractor_HYCU Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d1056021-3cc5-5264-b3b5-611e1b083272", "name": "OwnBackup Inc", "family": "Distractor_OwnBackup Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "3f1530fb-a159-530c-b02f-2566cdbc05f9", "name": "Spanning Cloud", "family": "Distractor_Spanning Cloud", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "441d8da6-1c84-5440-8502-618eef666e5a", "name": "Kaseya Limited", "family": "Distractor_Kaseya Limited", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d1a1f89a-7266-5cf5-b151-d5d191deb2e9", "name": "ConnectWise LLC", "family": "Distractor_ConnectWise LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0f7f4cd0-8c80-55da-abf5-9513e983d778", "name": "SolarWinds Worldwide", "family": "Distractor_SolarWinds Worldwide", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cdf08423-2487-5abe-bd45-eef41208339a", "name": "NinjaRMM LLC", "family": "Distractor_NinjaRMM LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7fa2f478-6760-56ce-877a-7e9d582fc440", "name": "Atera Networks", "family": "Distractor_Atera Networks", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "17b841a7-76eb-521a-b4f2-75528609eacf", "name": "Syncro MSP", "family": "Distractor_Syncro MSP", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "89a73e83-1c3f-5be3-abde-ac435bdad8d6", "name": "Datadog Partner Dev 1", "family": "Distractor_Datadog Partner Dev 1", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d24abd46-d21b-5b99-8f27-7fd855eba6a6", "name": "Datadog Partner Dev 2", "family": "Distractor_Datadog Partner Dev 2", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "2713493b-8172-530f-b6e9-1fb8709cb89f", "name": "New Relic Inc", "family": "Distractor_New Relic Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e62f0d77-bb49-50c3-b549-7ed5411d02ed", "name": "AppDynamics LLC", "family": "Distractor_AppDynamics LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "22984164-1c54-50e6-9906-9cc8da5b4e13", "name": "Dynatrace Systems", "family": "Distractor_Dynatrace Systems", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "424e801a-1a09-561d-84ac-a3809fb453c9", "name": "Datadog Partner Dev 3", "family": "Distractor_Datadog Partner Dev 3", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "132b552b-3e76-5219-898c-9f12450903c2", "name": "Sumo Logic", "family": "Distractor_Sumo Logic", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "86d994e7-ec7a-598c-bd4d-4252cefeaaf8", "name": "Loggly Inc", "family": "Distractor_Loggly Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cbb5ba0f-922b-5b36-a728-313d314c683c", "name": "Papertrail LLC", "family": "Distractor_Papertrail LLC", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1d3d0084-9f7c-5288-af93-a3d20803d1b5", "name": "LogDNA Inc", "family": "Distractor_LogDNA Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "762546e1-1dc1-5f85-abc5-c24738a334a4", "name": "Coralogix Ltd", "family": "Distractor_Coralogix Ltd", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "5e451549-bb8b-5e35-9c0b-bdf0986ab727", "name": "Humio ApS", "family": "Distractor_Humio ApS", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7bafd362-72c1-5b2e-b32d-ec3413e60d88", "name": "Graylog Inc", "family": "Distractor_Graylog Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0115a77d-03e9-5121-a841-2df48d92cbdb", "name": "Logz.io Inc", "family": "Distractor_Logz.io Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "f18f40a0-b5f9-531f-a5df-4297a29ff934", "name": "Scalyr Inc", "family": "Distractor_Scalyr Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "214d1a39-a90a-5cda-b78a-310d7c08c526", "name": "Wavefront by VMware", "family": "Distractor_Wavefront by VMware", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8c47e31b-cdab-52c6-95ed-f9e08343c089", "name": "SignalFx Inc", "family": "Distractor_SignalFx Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ebb3f1e7-690c-5c34-ac99-80793f68487d", "name": "Lightstep Inc", "family": "Distractor_Lightstep Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "3f4bb40e-0c1b-57fd-a8de-e1c8c77df3b1", "name": "Honeycomb.io", "family": "Distractor_Honeycomb.io", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "31123cdf-60fe-5e59-8885-32ad1e288b84", "name": "Chronosphere Inc", "family": "Distractor_Chronosphere Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "2cf10783-cce2-5722-a78e-560c0c2741a8", "name": "Grafana Labs", "family": "Distractor_Grafana Labs", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "da5c7176-1441-5dbb-8b2c-17d8ed9eb853", "name": "InfluxData Inc", "family": "Distractor_InfluxData Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "da5b10ea-b3d2-55c4-a3d8-cf210983d5b0", "name": "Prometheus Services", "family": "Distractor_Prometheus Services", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7ba05fe1-8c19-5de9-81e5-063daeb80562", "name": "Cortex Metrics", "family": "Distractor_Cortex Metrics", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "193a58d0-f996-50b3-b958-888c99b3ec8f", "name": "Thanos Metrics", "family": "Distractor_Thanos Metrics", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "bbecc4f8-66f2-5893-9eb1-4445a4239091", "name": "VictoriaMetrics", "family": "Distractor_VictoriaMetrics", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "dd87f7a9-1ddc-5964-9031-42b35dcf6aba", "name": "Timescale Inc", "family": "Distractor_Timescale Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "428d098b-aa93-5962-983b-c9f100b8a18e", "name": "Quest Software", "family": "Distractor_Quest Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0def680e-c2c2-5c82-8a2b-4ff694d949c0", "name": "Idera Inc", "family": "Distractor_Idera Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "73fe84c7-72b9-5d91-a733-5eb1baba3f61", "name": "Redgate Software", "family": "Distractor_Redgate Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "53e70868-8293-5618-87c7-41260714c43a", "name": "SolarWinds Database", "family": "Distractor_SolarWinds Database", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "5d28996a-69eb-5f7e-8e34-aa7e627dcb6c", "name": "Idera Database Tools", "family": "Distractor_Idera Database Tools", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9588cde9-14e1-5829-9a64-e4315345f6cd", "name": "DbVisualizer AB", "family": "Distractor_DbVisualizer AB", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "fde0037c-a001-5100-ae0e-3e7e2b77f39c", "name": "Navicat Software", "family": "Distractor_Navicat Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "563d6139-e2aa-5fa6-bf99-cd0eff932dbe", "name": "DataGrip JetBrains", "family": "Distractor_DataGrip JetBrains", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "6b679868-c79a-5629-b831-858b9030a016", "name": "DBeaver Corp", "family": "Distractor_DBeaver Corp", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d6cc8899-219d-516b-95d0-7ebf8539a2e6", "name": "Tableau Software", "family": "Distractor_Tableau Software", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "f2af2571-ab33-5e2b-a475-4c5378e2bfac", "name": "QlikTech Inc", "family": "Distractor_QlikTech Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d158457d-acd6-53f4-a317-6c0ccb2a0155", "name": "Looker Data", "family": "Distractor_Looker Data", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "59107be0-ce7c-52d7-930c-7abc8125e350", "name": "Sisense Inc", "family": "Distractor_Sisense Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "b9c49085-af54-58f0-a731-509468ee5674", "name": "ThoughtSpot Inc", "family": "Distractor_ThoughtSpot Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8959bf0c-8ac5-50e2-bdc7-2ea32f03a581", "name": "Domo Inc", "family": "Distractor_Domo Inc", "split": "dev", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a92a19f4-dfc6-5ecc-8340-9c5957a65430", "name": "Microsoft Corporation", "family": "Microsoft", "split": "held_out", "aliases": ["Microsoft", "MSFT"], "parent_id": null, "status": "active"}
+{"id": "7bec6f2b-8a91-535d-91a0-f1711ccd618f", "name": "Salesforce, Inc.", "family": "Salesforce", "split": "held_out", "aliases": ["Salesforce", "Salesforce.com"], "parent_id": null, "status": "active"}
+{"id": "d7175375-76ef-55a3-bae7-d055610bb1f7", "name": "CrowdStrike, Inc.", "family": "CrowdStrike", "split": "held_out", "aliases": ["CrowdStrike", "Crowdstrike"], "parent_id": null, "status": "active"}
+{"id": "8bd3c83e-d125-5c7e-a740-5c5492813489", "name": "Apple Inc.", "family": "Apple", "split": "held_out", "aliases": ["Apple"], "parent_id": null, "status": "active"}
+{"id": "1207373a-241b-5a84-a360-1389a1c6e882", "name": "Applied Materials, Inc.", "family": "Applied Materials", "split": "held_out", "aliases": ["Applied Materials"], "parent_id": null, "status": "active"}
+{"id": "3271f2f9-235f-5d0a-937c-3314168a3f52", "name": "US Foods, Inc.", "family": "US Foods", "split": "held_out", "aliases": ["US Foods"], "parent_id": null, "status": "active"}
+{"id": "0dd6a1d8-25d3-5a2f-a2a0-eccc1add19c3", "name": "GitHub, Inc.", "family": "GitHub", "split": "held_out", "aliases": ["GitHub"], "parent_id": null, "status": "active"}
+{"id": "2192bff8-e410-5049-87f4-d7479b2ec19d", "name": "GitLab, Inc.", "family": "GitLab", "split": "held_out", "aliases": ["GitLab"], "parent_id": null, "status": "active"}
+{"id": "58b1afc8-baf1-5b18-b49d-eb753fef701a", "name": "Square, Inc.", "family": "Square", "split": "held_out", "aliases": ["Square", "Block Inc"], "parent_id": null, "status": "active"}
+{"id": "bace585b-66c8-5d29-8040-2b2d6d573a56", "name": "Squarespace, Inc.", "family": "Squarespace", "split": "held_out", "aliases": ["Squarespace"], "parent_id": null, "status": "active"}
+{"id": "78c8967c-8360-51b8-99ba-618801d87178", "name": "Notion Labs, Inc.", "family": "Notion", "split": "held_out", "aliases": ["Notion"], "parent_id": null, "status": "active"}
+{"id": "1827d535-ea78-555c-9503-3df292be9277", "name": "Motion Corp", "family": "Motion", "split": "held_out", "aliases": ["Motion"], "parent_id": null, "status": "active"}
+{"id": "31733094-c7f5-5f41-b793-4bd4b7a99d29", "name": "Sentry.io", "family": "Sentry", "split": "held_out", "aliases": ["Sentry", "Functional Software"], "parent_id": null, "status": "active"}
+{"id": "a2d97443-1297-52e1-ad31-a5d1f79de7fa", "name": "Centric Software Inc", "family": "Centric Software", "split": "held_out", "aliases": ["Centric"], "parent_id": null, "status": "active"}
+{"id": "f2532dea-b29d-5670-80ac-fa7c3d98dd61", "name": "MongoDB, Inc.", "family": "MongoDB", "split": "held_out", "aliases": ["MongoDB"], "parent_id": null, "status": "active"}
+{"id": "6e5901dd-3398-5b57-a84b-adcff57561a4", "name": "ServiceNow, Inc.", "family": "ServiceNow", "split": "held_out", "aliases": ["ServiceNow"], "parent_id": null, "status": "active"}
+{"id": "500059c8-e6e6-5fa3-9e90-c05d1a06bf12", "name": "PagerDuty, Inc.", "family": "PagerDuty", "split": "held_out", "aliases": ["PagerDuty"], "parent_id": null, "status": "active"}
+{"id": "6ddd17da-4db6-5b81-8dab-5fc037b26d89", "name": "Cloudflare, Inc.", "family": "Cloudflare", "split": "held_out", "aliases": ["Cloudflare"], "parent_id": null, "status": "active"}
+{"id": "536c264e-b8ca-5f6e-a408-30984f2c30b8", "name": "Docker, Inc.", "family": "Docker", "split": "held_out", "aliases": ["Docker"], "parent_id": null, "status": "active"}
+{"id": "3ed99801-679f-5dc8-9a0a-4271f0079cb0", "name": "Palantir Technologies Inc.", "family": "Palantir", "split": "held_out", "aliases": ["Palantir"], "parent_id": null, "status": "active"}
+{"id": "8ea03eb7-a805-59bd-9403-493946a303d8", "name": "Slack Technologies, LLC", "family": "Slack", "split": "held_out", "aliases": ["Slack"], "parent_id": null, "status": "active"}
+{"id": "303520ac-df56-5a37-b063-cedee2200257", "name": "Asana, Inc.", "family": "Asana", "split": "held_out", "aliases": ["Asana"], "parent_id": null, "status": "active"}
+{"id": "3894c691-b75a-51c6-89cb-7f10cdf32f3a", "name": "Intercom, Inc.", "family": "Intercom", "split": "held_out", "aliases": ["Intercom"], "parent_id": null, "status": "active"}
+{"id": "aca8bd1c-7615-5161-b022-ab41af4545be", "name": "Telecom Italia S.p.A.", "family": "Telecom Italia", "split": "held_out", "aliases": ["TIM"], "parent_id": null, "status": "active"}
+{"id": "669bb2f1-22e9-51d2-a244-6e6d47bfad6e", "name": "Monday.com Ltd", "family": "Monday.com", "split": "held_out", "aliases": ["Monday.com", "Monday"], "parent_id": null, "status": "active"}
+{"id": "7a825b63-0c5e-5cfd-8151-58023e553830", "name": "Sunday Security Inc", "family": "Sunday Security", "split": "held_out", "aliases": ["Sunday Security"], "parent_id": null, "status": "active"}
+{"id": "ca844d4f-120f-5d2c-abc7-e0c6448e499d", "name": "Confluent, Inc.", "family": "Confluent", "split": "held_out", "aliases": ["Confluent"], "parent_id": null, "status": "active"}
+{"id": "5a5da1db-0dad-53ec-b742-9171d331f9aa", "name": "Level 4 Labs", "family": "Level", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a3e3cee1-5938-5472-9311-c7c3195db6ab", "name": "Johnson & Johnson", "family": "Johnson & Johnson", "split": "held_out", "aliases": ["J&J", "Johnson and Johnson"], "parent_id": null, "status": "active"}
+{"id": "8a0b5e74-e9c0-5e8f-b5de-4fbbbbb13f40", "name": "Bank of America Corporation", "family": "Bank of America", "split": "held_out", "aliases": ["BofA", "Bank of America"], "parent_id": null, "status": "active"}
+{"id": "5cda9ad3-3796-5d27-9f7d-bdf508170e0e", "name": "UK Power Networks Ltd", "family": "UK Power Networks", "split": "held_out", "aliases": ["UK Power Networks"], "parent_id": null, "status": "active"}
+{"id": "3492cbba-95b6-5834-b6af-e4bdc01717b9", "name": "Apex Group Ltd", "family": "Apex", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "99fbaf4a-cc95-54ef-a9bf-d301ec70489a", "name": "Web3 Technologies Inc", "family": "Web3", "split": "held_out", "aliases": ["Web3", "Web 3"], "parent_id": null, "status": "active"}
+{"id": "0f7163b1-9161-54c8-b867-e6393d70ab41", "name": "Acme Germany", "family": "Acme", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "2f38d7a7-1a38-55d3-b2ca-6e94317a7452", "name": "Acme UK", "family": "Acme", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ec55ba61-5909-543f-b647-679d0c052ff2", "name": "CrowdStrike UK Ltd", "family": "CrowdStrike", "split": "held_out", "aliases": [], "parent_id": "d7175375-76ef-55a3-bae7-d055610bb1f7", "status": "active"}
+{"id": "954a4606-e6ef-52f9-965f-dc16e1f5e2e0", "name": "Microsoft Ireland Operations Ltd", "family": "Microsoft", "split": "held_out", "aliases": [], "parent_id": "a92a19f4-dfc6-5ecc-8340-9c5957a65430", "status": "active"}
+{"id": "154dba80-48ab-589c-a7f5-ea30e5cee272", "name": "Coupa Software Inc", "family": "Distractor_Coupa Software Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cae26656-1952-5e04-b068-28246ce039a9", "name": "Basware Corporation", "family": "Distractor_Basware Corporation", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "c16d8033-45d7-55f0-ac35-58151ffd2a3c", "name": "Kyriba Financial", "family": "Distractor_Kyriba Financial", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a18bbb4b-027c-5df8-80e4-125a8b9cee54", "name": "Tipalti Payments", "family": "Distractor_Tipalti Payments", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ec95f4d5-88ee-50e5-a011-a9b993b92474", "name": "Airbase Solutions", "family": "Distractor_Airbase Solutions", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a623c320-f34a-50ff-ae47-150783c4e2cb", "name": "Teampay Expense", "family": "Distractor_Teampay Expense", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "19f636d0-40f3-5c76-86b9-a4f56793ce56", "name": "Ramp Financial Inc", "family": "Distractor_Ramp Financial Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1c79da70-71a0-5505-b9e5-b877fc171ace", "name": "Brex Corporate", "family": "Distractor_Brex Corporate", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d52847d3-eccb-503f-98d9-dfb7f05001b9", "name": "Infor Global", "family": "Distractor_Infor Global", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "47e1c39a-7c72-5e32-bd5b-7ca6d2969f81", "name": "Epicor Software", "family": "Distractor_Epicor Software", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a500f8f7-5de7-500c-b0de-30a94ec01c3f", "name": "Sage Group", "family": "Distractor_Sage Group", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1c82f5e3-1ec2-5e3f-8a22-d6d5bb9061b9", "name": "Unit4 NV", "family": "Distractor_Unit4 NV", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1d3f2e30-033e-5847-be97-c60de0e67bf7", "name": "IFS AB", "family": "Distractor_IFS AB", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0d042995-bfc4-5e12-bb76-630b1776130d", "name": "Deltek Inc", "family": "Distractor_Deltek Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "bcaf92f9-a968-57be-a523-06bfb410870e", "name": "Acumatica Inc", "family": "Distractor_Acumatica Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "050839d6-64b6-5b05-a3d2-257817a21e1a", "name": "NetSuite Inc", "family": "Distractor_NetSuite Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "4e5b3327-c11e-5e84-9134-6e9a06b15f91", "name": "Intuit Inc", "family": "Distractor_Intuit Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "42af9f57-40ef-5472-be44-af7242bc7e58", "name": "Xero Limited", "family": "Distractor_Xero Limited", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8f2940a9-273e-5962-9643-4ae3ee66265f", "name": "FreshBooks Inc", "family": "Distractor_FreshBooks Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d14ca4b2-3267-54fd-a95a-2e406dc7af1f", "name": "Wave Financial", "family": "Distractor_Wave Financial", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "c96967f9-eb83-59c1-a4de-38631f2b39c7", "name": "Zoho Corporation", "family": "Distractor_Zoho Corporation", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a90c466d-f3c2-558a-a81c-b9f1904f1466", "name": "SugarCRM Inc", "family": "Distractor_SugarCRM Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7a2dac4a-fdb3-53de-8758-355539ce7fe7", "name": "Zendesk Inc", "family": "Distractor_Zendesk Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ba73d1af-e6de-592c-a11a-a531a543d213", "name": "Freshworks Inc", "family": "Distractor_Freshworks Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cf81b807-b063-5885-91a2-0b6158ee6221", "name": "Help Scout", "family": "Distractor_Help Scout", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "f5511a25-c945-567e-9cec-afeaaaccd34c", "name": "Kustomer Inc", "family": "Distractor_Kustomer Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "163f0979-e60e-564f-9670-377fe24aa6a1", "name": "Gorgias Inc", "family": "Distractor_Gorgias Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d9f09b36-abad-56cf-9f00-2ca74abc4042", "name": "Front App Inc", "family": "Distractor_Front App Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a62ed69f-a422-57f7-a7de-1149015ddb76", "name": "Groove Networks", "family": "Distractor_Groove Networks", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e81818a1-a808-54ad-ae47-fe39b665ffe2", "name": "LiveChat Software", "family": "Distractor_LiveChat Software", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "5d7232cb-e33c-52e3-a1ec-f974d433024d", "name": "Olark Inc", "family": "Distractor_Olark Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "07f8511e-8089-5844-a466-656e440e0f73", "name": "Tidio LLC", "family": "Distractor_Tidio LLC", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d483a5ae-9bdb-52f4-a6c6-1b4f4f20a7db", "name": "Crisp IM", "family": "Distractor_Crisp IM", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "5c6ad4b3-2e15-5b3a-8cef-86fc880d4acc", "name": "Drift.com Inc", "family": "Distractor_Drift.com Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e81723a7-e281-5d9e-a00d-e62f797d53e6", "name": "Qualified.com", "family": "Distractor_Qualified.com", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e71c15d0-5e7f-5913-997d-3da1a266feb5", "name": "Conversica Inc", "family": "Distractor_Conversica Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "91516838-e61d-5f35-956f-5ebc8eb9c19a", "name": "Exceed.ai", "family": "Distractor_Exceed.ai", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "46d61144-3f89-5c69-a3d5-5098dc0f6277", "name": "Salesloft Inc", "family": "Distractor_Salesloft Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "2b57114e-2bd7-5f55-bc9f-14e2cf246637", "name": "Outreach.io", "family": "Distractor_Outreach.io", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8661cdf1-cd4d-56e2-b4a3-c9ad32928875", "name": "Apollo.io", "family": "Distractor_Apollo.io", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a8e0d3e2-727a-5b5f-88ee-7b05c3cd1fd9", "name": "Cognism Ltd", "family": "Distractor_Cognism Ltd", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "f9074ecd-582f-5831-ad14-9e5bff40982f", "name": "Lusha Systems", "family": "Distractor_Lusha Systems", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "b39ee910-096a-58a1-a1ae-5004598ecc97", "name": "LeadIQ Inc", "family": "Distractor_LeadIQ Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "74c0c007-4335-500e-8b29-455c35f2469c", "name": "Seamless.ai", "family": "Distractor_Seamless.ai", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "27a36642-c327-5499-9c1f-36e6539fadfb", "name": "Uplead LLC", "family": "Distractor_Uplead LLC", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "4b4a4a9f-a4eb-5ff9-9585-aa5c40040bc1", "name": "Clearbit Inc", "family": "Distractor_Clearbit Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9b7113c9-9269-51dd-a026-ec1c58d312a1", "name": "FullContact Inc", "family": "Distractor_FullContact Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a9d9b27c-ab8e-55dd-84ed-efdf8eee419d", "name": "PeopleDataLabs", "family": "Distractor_PeopleDataLabs", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "5e32867b-cc10-5b7f-becc-daff4442d9b5", "name": "Pipl Inc", "family": "Distractor_Pipl Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "68324a8d-cb0a-5c16-9c74-bdda1c1bb404", "name": "Dun & Bradstreet", "family": "Distractor_Dun & Bradstreet", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "4d39642b-fecc-50d2-b2bc-ef0f0f49c1b3", "name": "Experian Business", "family": "Distractor_Experian Business", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0b4ef739-4b5e-5366-95fb-afd9d54b0a8f", "name": "Equifax Commercial", "family": "Distractor_Equifax Commercial", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cbe8cf73-9b1b-53b7-ac52-52fb348ceb4b", "name": "TransUnion B2B", "family": "Distractor_TransUnion B2B", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "60c41a05-7271-55fd-a9ed-b9a5a62aefb4", "name": "LexisNexis Risk", "family": "Distractor_LexisNexis Risk", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "150e5642-7022-567e-a262-c545bd979f78", "name": "Thomson Reuters", "family": "Distractor_Thomson Reuters", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "28451e83-01ca-5097-876e-f80c83bbb427", "name": "Bloomberg LP", "family": "Distractor_Bloomberg LP", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7b36e139-bf7d-5094-a70a-82a157f0d44b", "name": "FactSet Research", "family": "Distractor_FactSet Research", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d2d0961f-075a-5e3f-bfee-e54eb7a6f45a", "name": "S&P Global", "family": "Distractor_S&P Global", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "d09c2d2e-92a2-5197-9dde-0e28a989f1cd", "name": "Moody's Analytics", "family": "Distractor_Moody's Analytics", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "45863be0-d28b-5bfb-82c5-725f23e0c60c", "name": "Morningstar Inc", "family": "Distractor_Morningstar Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7c0df8fb-62d0-571d-aa82-20fffb751889", "name": "PitchBook Data", "family": "Distractor_PitchBook Data", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "32e9e6df-8727-50b0-9b8e-32791216c84f", "name": "Crunchbase Inc", "family": "Distractor_Crunchbase Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "246b5708-8725-5e49-a63d-02e362eaf553", "name": "CB Insights", "family": "Distractor_CB Insights", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "afb4e188-c1be-50a8-b5e0-48d2f4b42d3d", "name": "Gartner Inc", "family": "Distractor_Gartner Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "29d8b7e3-89be-5919-9d8e-1bafbdc9fc1d", "name": "Forrester Research", "family": "Distractor_Forrester Research", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "833e3e24-2608-5018-bdef-e71ae5b884f1", "name": "IDC Research", "family": "Distractor_IDC Research", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "05efcada-e2d6-5c32-855a-4089e0e54dcc", "name": "451 Research", "family": "Distractor_451 Research", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "b93e1fe0-63a4-5095-93a1-c60a58d1fac2", "name": "G2.com Inc", "family": "Distractor_G2.com Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9328edaf-6ac8-5a07-b575-117c4bd82b09", "name": "TrustRadius Inc", "family": "Distractor_TrustRadius Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "792ee4f5-7389-58bc-8a30-392afbc916a3", "name": "Capterra Inc", "family": "Distractor_Capterra Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "1cd00de0-c743-5b24-85fa-167e723b0a24", "name": "Software Advice", "family": "Distractor_Software Advice", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "df431a80-5280-5285-ba54-5b44230abee7", "name": "GetApp Inc", "family": "Distractor_GetApp Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "cdaf3df7-b983-59cb-b7ab-d3516af7fd76", "name": "PeerSpot Inc", "family": "Distractor_PeerSpot Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "49672d77-e9ee-50ef-a88e-f71fe50057bd", "name": "Marketo Inc", "family": "Distractor_Marketo Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "48c9b05a-8819-55dd-a421-2218d1c3d52b", "name": "Pardot LLC", "family": "Distractor_Pardot LLC", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ce91813e-1e95-50ad-8b75-4239a45001b1", "name": "Eloqua Corp", "family": "Distractor_Eloqua Corp", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a203ce52-36d6-5b1b-ab2e-cdc5c2f3eb80", "name": "ActiveCampaign", "family": "Distractor_ActiveCampaign", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8266443a-b7f7-53d4-a08f-44bf9651c3a1", "name": "Mailchimp Inc", "family": "Distractor_Mailchimp Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "22cf7a95-0f72-5e2b-ad22-d2ff658cc6e4", "name": "Klaviyo Inc", "family": "Distractor_Klaviyo Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "da358bb4-4d03-5641-8b0a-6a7dd59f1611", "name": "Sendgrid Inc", "family": "Distractor_Sendgrid Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "f195c3f6-d533-598e-93e1-df216aa3d2ee", "name": "Braze Inc", "family": "Distractor_Braze Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "3897ffe0-e4c2-5dc5-9b9f-4226429fc89e", "name": "Iterable Inc", "family": "Distractor_Iterable Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "947d2c66-4648-5bfd-a1dd-768340e8d075", "name": "Customer.io", "family": "Distractor_Customer.io", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "a065be0c-efd7-53e8-a23d-a7d2b1515395", "name": "Omnisend Inc", "family": "Distractor_Omnisend Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "6e751e3e-5f8d-529c-aec1-418e3c401c97", "name": "Campaign Monitor", "family": "Distractor_Campaign Monitor", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "aad5395f-4041-50c8-9e36-8f89dfe39a87", "name": "Constant Contact", "family": "Distractor_Constant Contact", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "3e9446ea-e05c-51ff-a097-6a0307102417", "name": "AWeber Systems", "family": "Distractor_AWeber Systems", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "30677ca4-e3be-5d22-a522-9f389de4ab53", "name": "GetResponse Inc", "family": "Distractor_GetResponse Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "6e43e985-ae2b-50b0-836c-398c0a0fa9d0", "name": "ConvertKit LLC", "family": "Distractor_ConvertKit LLC", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "ca51b3de-67c1-5e00-9f93-2b8ce6bc987f", "name": "Drip Inc", "family": "Distractor_Drip Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "fbf650b2-72b2-545c-a65c-3b61e89416d1", "name": "MailerLite Ltd", "family": "Distractor_MailerLite Ltd", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "eef26a32-2a79-5b7c-869e-6bdd7f5bc25d", "name": "Moosend Inc", "family": "Distractor_Moosend Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "7186f9cc-2036-5722-a2b3-ad49519b4f42", "name": "Brevo SAS", "family": "Distractor_Brevo SAS", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "e4fb0276-8ce7-5592-8f8a-d6365dfe0443", "name": "Postmark App", "family": "Distractor_Postmark App", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9a8aea89-6d50-5fcb-8fa5-544f6c23b35e", "name": "SparkPost Inc", "family": "Distractor_SparkPost Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "0e9f9356-9159-52a0-a297-c2a20e3283af", "name": "Mailgun Technologies", "family": "Distractor_Mailgun Technologies", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "48440cf5-026b-5100-a449-d4d698252bbe", "name": "MessageBird BV", "family": "Distractor_MessageBird BV", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "83ff4c7d-f721-5583-abb4-a84ba27c9af6", "name": "Sinch AB", "family": "Distractor_Sinch AB", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "9349379b-c573-5d80-ab42-ff362c2fdfb3", "name": "FloQast Inc", "family": "Distractor_FloQast Inc", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "176f3d21-46e3-5e64-ad2a-0e73198d5031", "name": "BlackLine Systems", "family": "Distractor_BlackLine Systems", "split": "held_out", "aliases": [], "parent_id": null, "status": "active"}
+{"id": "8dcf3187-bdc8-50c3-ae13-9112fe8d5844", "name": "Merged Sentry Inc", "family": "MergedSentry", "split": "held_out", "aliases": [], "parent_id": null, "status": "merged", "previous_status": "active", "merged_into_id": "31733094-c7f5-5f41-b793-4bd4b7a99d29"}
+{"id": "670d2360-b7a8-5a3e-becb-ac2a3b1e1413", "name": "Pending Review Partner", "family": "PendingPartner", "split": "held_out", "aliases": [], "parent_id": null, "status": "pending_review"}

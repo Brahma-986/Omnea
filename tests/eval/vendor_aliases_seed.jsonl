@@ -1,0 +1,62 @@
+{"id": "a5b0a3d0-ab60-51f2-8736-9ce1662ee9a4", "vendor_id": "b1d7e5dd-9cfd-5b52-b536-1ba9793c7ee8", "alias": "Datadog", "normalized_alias": "datadog", "source": "seed"}
+{"id": "69304baa-9802-577a-992f-e85124598bd4", "vendor_id": "683498a4-b7b7-5893-a8dd-7f06b35747a4", "alias": "SAP", "normalized_alias": "sap", "source": "seed"}
+{"id": "32ae2cb7-7de2-52a0-9e68-64a4224a10e5", "vendor_id": "06053410-8c33-550f-8bdf-58662e88f70a", "alias": "Cisco", "normalized_alias": "cisco", "source": "seed"}
+{"id": "d912142c-c2a8-577b-9fef-08c399df4fc7", "vendor_id": "3e88dc26-b030-5bc9-80bf-0c19227593e9", "alias": "Sysco", "normalized_alias": "sysco", "source": "seed"}
+{"id": "885ab82d-9c20-502d-9b47-4b0cb6dc9c84", "vendor_id": "39168de5-ce75-5af7-9a61-e017ee917647", "alias": "AWS", "normalized_alias": "aws", "source": "seed"}
+{"id": "b8745ae2-7d00-5d75-ab13-415638ec7187", "vendor_id": "39168de5-ce75-5af7-9a61-e017ee917647", "alias": "Amazon AWS", "normalized_alias": "amazon aws", "source": "seed"}
+{"id": "96e0b209-34fa-5432-ba27-8a2e80c432d0", "vendor_id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "alias": "Google", "normalized_alias": "google", "source": "seed"}
+{"id": "db3c7bd5-6edb-501a-90d9-a27bf4b9b9c6", "vendor_id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "alias": "GCP", "normalized_alias": "gcp", "source": "seed"}
+{"id": "4928b940-a233-5f42-bc95-a59b683af5c6", "vendor_id": "9e528ab7-88ff-5c28-b1a3-e6f35ff86909", "alias": "Google Cloud", "normalized_alias": "google cloud", "source": "seed"}
+{"id": "14cb5fb5-7191-5e1d-856f-a875ac727b78", "vendor_id": "ab455759-c0ce-5fc1-93ec-6e0aba8938f6", "alias": "Box", "normalized_alias": "box", "source": "seed"}
+{"id": "52729779-9f6c-5b50-ab59-f32487e84c33", "vendor_id": "b8602a0a-4afc-50b1-8e83-967a83b9d2e3", "alias": "Fox", "normalized_alias": "fox", "source": "seed"}
+{"id": "19dcdf1f-a76f-59ad-b844-fd7041291aa1", "vendor_id": "408a0381-b51d-5df2-8b90-966bfab74422", "alias": "Hubspot", "normalized_alias": "hubspot", "source": "seed"}
+{"id": "4ff23ae2-3cde-5a98-8fde-1f0c84c2f374", "vendor_id": "06224268-d110-5b04-b761-f183a2dc8fce", "alias": "Twilio", "normalized_alias": "twilio", "source": "seed"}
+{"id": "f3e70526-430a-5821-a13d-afa0f90a2d0d", "vendor_id": "3a32c6a3-35a6-52bf-af82-4ba0435ff7c5", "alias": "Figma", "normalized_alias": "figma", "source": "seed"}
+{"id": "efd9f8df-ae10-52b4-99c3-0d889bdd0bf3", "vendor_id": "5941a7e3-b2ba-568d-b741-9bb189894c15", "alias": "Snowflake", "normalized_alias": "snowflake", "source": "seed"}
+{"id": "450ecb0e-185f-5326-be14-b7b615f28f39", "vendor_id": "f0225bc3-5094-530f-ad90-d1b5aea8c5dd", "alias": "Atlassian", "normalized_alias": "atlassian", "source": "seed"}
+{"id": "28059e0d-e182-56c4-a850-5e7a76aa50fd", "vendor_id": "45b08b96-1caa-5055-b063-b8534ffacf2f", "alias": "Zoom", "normalized_alias": "zoom", "source": "seed"}
+{"id": "2d47f4c9-7da0-50cf-9088-84ff1a1fb967", "vendor_id": "45b08b96-1caa-5055-b063-b8534ffacf2f", "alias": "Zoom Video", "normalized_alias": "zoom video", "source": "seed"}
+{"id": "a767338a-5180-5c48-96ca-922d16315d27", "vendor_id": "cd273432-5029-5b77-b073-5b4bbdea297d", "alias": "ZoomInfo", "normalized_alias": "zoominfo", "source": "seed"}
+{"id": "7e03e4cf-3a23-5891-ba8e-f61abe5b15ce", "vendor_id": "996a1ed7-7d64-5513-a8ff-917441010a0f", "alias": "SaaS Labs", "normalized_alias": "saas labs", "source": "seed"}
+{"id": "34e8d47e-712e-5653-9cbd-0f1198c360e2", "vendor_id": "a3236201-52e2-5c22-9068-700184c2184e", "alias": "Fastly", "normalized_alias": "fastly", "source": "seed"}
+{"id": "f5f33eea-a686-545d-8472-5426489f2fac", "vendor_id": "6e7a92c1-9117-567b-af9a-008fc42141b5", "alias": "Dynatrace", "normalized_alias": "dynatrace", "source": "seed"}
+{"id": "e4f316a0-e709-580f-8d7c-0dcf719bda9c", "vendor_id": "a92a19f4-dfc6-5ecc-8340-9c5957a65430", "alias": "Microsoft", "normalized_alias": "microsoft", "source": "seed"}
+{"id": "696965f9-ee78-52d3-be2c-3dda5f998f16", "vendor_id": "a92a19f4-dfc6-5ecc-8340-9c5957a65430", "alias": "MSFT", "normalized_alias": "msft", "source": "seed"}
+{"id": "2df7e057-ea2c-54a6-b93c-2cba7dd766d3", "vendor_id": "7bec6f2b-8a91-535d-91a0-f1711ccd618f", "alias": "Salesforce", "normalized_alias": "salesforce", "source": "seed"}
+{"id": "ea028c80-3fd4-5ed0-b257-2857b5c8deba", "vendor_id": "7bec6f2b-8a91-535d-91a0-f1711ccd618f", "alias": "Salesforce.com", "normalized_alias": "salesforce.com", "source": "seed"}
+{"id": "99953e82-9343-59bc-943f-c7e81563f42e", "vendor_id": "d7175375-76ef-55a3-bae7-d055610bb1f7", "alias": "CrowdStrike", "normalized_alias": "crowdstrike", "source": "seed"}
+{"id": "c9cadc94-8510-5abd-b072-8be0c32c5154", "vendor_id": "d7175375-76ef-55a3-bae7-d055610bb1f7", "alias": "Crowdstrike", "normalized_alias": "crowdstrike", "source": "seed"}
+{"id": "f9ae1805-b724-5c39-8feb-3371b0215c63", "vendor_id": "8bd3c83e-d125-5c7e-a740-5c5492813489", "alias": "Apple", "normalized_alias": "apple", "source": "seed"}
+{"id": "6928f95e-1bb9-58fa-8e6b-d3fa159b3ede", "vendor_id": "1207373a-241b-5a84-a360-1389a1c6e882", "alias": "Applied Materials", "normalized_alias": "applied materials", "source": "seed"}
+{"id": "bbfdb4a3-753d-5600-ae2c-469c8fb87bdd", "vendor_id": "3271f2f9-235f-5d0a-937c-3314168a3f52", "alias": "US Foods", "normalized_alias": "us foods", "source": "seed"}
+{"id": "d33e7583-0831-5633-b5ae-59a57645a9d7", "vendor_id": "0dd6a1d8-25d3-5a2f-a2a0-eccc1add19c3", "alias": "GitHub", "normalized_alias": "github", "source": "seed"}
+{"id": "7afda6ed-4148-5a17-9253-2c71c098a9d4", "vendor_id": "2192bff8-e410-5049-87f4-d7479b2ec19d", "alias": "GitLab", "normalized_alias": "gitlab", "source": "seed"}
+{"id": "b972ad68-0e92-5176-8903-d13c1c9c58c1", "vendor_id": "58b1afc8-baf1-5b18-b49d-eb753fef701a", "alias": "Square", "normalized_alias": "square", "source": "seed"}
+{"id": "c5ab1817-5f67-578c-a29c-ac58875ae6c4", "vendor_id": "58b1afc8-baf1-5b18-b49d-eb753fef701a", "alias": "Block Inc", "normalized_alias": "block inc", "source": "seed"}
+{"id": "c291839f-bed3-5982-a0fc-9e4b96608b51", "vendor_id": "bace585b-66c8-5d29-8040-2b2d6d573a56", "alias": "Squarespace", "normalized_alias": "squarespace", "source": "seed"}
+{"id": "3ffe7639-d99d-5c9b-858a-d5bd9cc2f291", "vendor_id": "78c8967c-8360-51b8-99ba-618801d87178", "alias": "Notion", "normalized_alias": "notion", "source": "seed"}
+{"id": "53e33037-9bcf-56e8-a8a6-e01e1d65b759", "vendor_id": "1827d535-ea78-555c-9503-3df292be9277", "alias": "Motion", "normalized_alias": "motion", "source": "seed"}
+{"id": "51ab05bb-e690-5ac8-be2d-14e7f940f5e4", "vendor_id": "31733094-c7f5-5f41-b793-4bd4b7a99d29", "alias": "Sentry", "normalized_alias": "sentry", "source": "seed"}
+{"id": "bdc3a543-94d5-51ce-b1af-45c614466ccc", "vendor_id": "31733094-c7f5-5f41-b793-4bd4b7a99d29", "alias": "Functional Software", "normalized_alias": "functional software", "source": "seed"}
+{"id": "846e04a8-67a5-528e-968d-63c70b7abd51", "vendor_id": "a2d97443-1297-52e1-ad31-a5d1f79de7fa", "alias": "Centric", "normalized_alias": "centric", "source": "seed"}
+{"id": "a06045e5-bd2b-59be-a2ed-eef2f2e12e55", "vendor_id": "f2532dea-b29d-5670-80ac-fa7c3d98dd61", "alias": "MongoDB", "normalized_alias": "mongodb", "source": "seed"}
+{"id": "1bd61ef1-2e67-544f-a606-774c6456f30c", "vendor_id": "6e5901dd-3398-5b57-a84b-adcff57561a4", "alias": "ServiceNow", "normalized_alias": "servicenow", "source": "seed"}
+{"id": "49cdda51-0b8a-5f50-9ada-851b729f5fe1", "vendor_id": "500059c8-e6e6-5fa3-9e90-c05d1a06bf12", "alias": "PagerDuty", "normalized_alias": "pagerduty", "source": "seed"}
+{"id": "64906e96-3d9a-503b-b786-9fca97307478", "vendor_id": "6ddd17da-4db6-5b81-8dab-5fc037b26d89", "alias": "Cloudflare", "normalized_alias": "cloudflare", "source": "seed"}
+{"id": "c554afc3-2e2c-54e4-96a0-429a256fa899", "vendor_id": "536c264e-b8ca-5f6e-a408-30984f2c30b8", "alias": "Docker", "normalized_alias": "docker", "source": "seed"}
+{"id": "b86062d8-d850-55cc-8913-1ce34ba55198", "vendor_id": "3ed99801-679f-5dc8-9a0a-4271f0079cb0", "alias": "Palantir", "normalized_alias": "palantir", "source": "seed"}
+{"id": "bafb7d8d-96ae-521b-8d02-715224add597", "vendor_id": "8ea03eb7-a805-59bd-9403-493946a303d8", "alias": "Slack", "normalized_alias": "slack", "source": "seed"}
+{"id": "3c02451f-c96d-5617-8748-ab1ef23ff00a", "vendor_id": "303520ac-df56-5a37-b063-cedee2200257", "alias": "Asana", "normalized_alias": "asana", "source": "seed"}
+{"id": "bae37bac-8fce-591a-b086-7e360fcd6938", "vendor_id": "3894c691-b75a-51c6-89cb-7f10cdf32f3a", "alias": "Intercom", "normalized_alias": "intercom", "source": "seed"}
+{"id": "357d4cbc-bff4-51c5-b169-352f1d6bd603", "vendor_id": "aca8bd1c-7615-5161-b022-ab41af4545be", "alias": "TIM", "normalized_alias": "tim", "source": "seed"}
+{"id": "4684a12d-545f-5f02-b5f3-ee79fd18bc5b", "vendor_id": "669bb2f1-22e9-51d2-a244-6e6d47bfad6e", "alias": "Monday.com", "normalized_alias": "monday.com", "source": "seed"}
+{"id": "4d25a6f1-b9d6-5946-8e32-c119bc29bb1b", "vendor_id": "669bb2f1-22e9-51d2-a244-6e6d47bfad6e", "alias": "Monday", "normalized_alias": "monday", "source": "seed"}
+{"id": "ce6e3e04-c685-54b3-94b7-29aa4e91b2dc", "vendor_id": "7a825b63-0c5e-5cfd-8151-58023e553830", "alias": "Sunday Security", "normalized_alias": "sunday security", "source": "seed"}
+{"id": "fd9297cd-f545-5af7-9fae-a59269ae4b2b", "vendor_id": "ca844d4f-120f-5d2c-abc7-e0c6448e499d", "alias": "Confluent", "normalized_alias": "confluent", "source": "seed"}
+{"id": "92587618-d575-5848-80aa-69a284bbff68", "vendor_id": "a3e3cee1-5938-5472-9311-c7c3195db6ab", "alias": "J&J", "normalized_alias": "j&j", "source": "seed"}
+{"id": "ac52a0b1-ea2f-5c51-ae61-222fa59e3426", "vendor_id": "a3e3cee1-5938-5472-9311-c7c3195db6ab", "alias": "Johnson and Johnson", "normalized_alias": "johnson and johnson", "source": "seed"}
+{"id": "28f324e8-390d-595b-a396-8013113515f4", "vendor_id": "8a0b5e74-e9c0-5e8f-b5de-4fbbbbb13f40", "alias": "BofA", "normalized_alias": "bofa", "source": "seed"}
+{"id": "a11652c8-78d7-5639-9675-c45f88f25d5f", "vendor_id": "8a0b5e74-e9c0-5e8f-b5de-4fbbbbb13f40", "alias": "Bank of America", "normalized_alias": "bank of america", "source": "seed"}
+{"id": "57e6c4a4-76a7-5738-8bd1-a7cc0473c0d3", "vendor_id": "5cda9ad3-3796-5d27-9f7d-bdf508170e0e", "alias": "UK Power Networks", "normalized_alias": "uk power networks", "source": "seed"}
+{"id": "b1f7bd6f-5ab2-541f-a36c-248cc177fa6a", "vendor_id": "99fbaf4a-cc95-54ef-a9bf-d301ec70489a", "alias": "Web3", "normalized_alias": "web3", "source": "seed"}
+{"id": "42741ce3-38fa-5e93-b418-8fd6488e62f6", "vendor_id": "99fbaf4a-cc95-54ef-a9bf-d301ec70489a", "alias": "Web 3", "normalized_alias": "web 3", "source": "seed"}
