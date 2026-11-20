@@ -22,9 +22,9 @@
       ]
     },
     "workers": {
-      "root": "services/workers",
+      "root": ".",
       "framework": "fastapi",
-      "entrypoint": "api/index.py"
+      "entrypoint": "services/workers/api/index.py"
     }
   },
   "rewrites": [
