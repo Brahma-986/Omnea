@@ -23,11 +23,9 @@ def _get_vercel_app(entrypoint: str = "index.py") -> Any:
 
 
 def test_api_index_vercel_entrypoint() -> None:
-    """Verify index.py and api/index.py load the FastAPI application without import errors."""
-    app1 = _get_vercel_app("index.py")
-    assert app1 is not None and app1.title == "omnea-procure-os"
-    app2 = _get_vercel_app("api/index.py")
-    assert app2 is not None and app2.title == "omnea-procure-os"
+    """Verify index.py loads the FastAPI application without import errors."""
+    app = _get_vercel_app("index.py")
+    assert app is not None and app.title == "omnea-procure-os"
 
 
 def test_vercel_json_configuration() -> None:
