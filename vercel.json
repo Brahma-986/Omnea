@@ -3,11 +3,14 @@
   "services": {
     "app": {
       "root": ".",
+      "framework": "fastapi",
       "buildCommand": "npm run build",
-      "outputDirectory": "public"
+      "outputDirectory": "public",
+      "entrypoint": "api/index.py"
     },
     "api": {
       "root": ".",
+      "framework": "fastapi",
       "entrypoint": "api/index.py",
       "bindings": [
         {
@@ -20,7 +23,8 @@
     },
     "workers": {
       "root": "services/workers",
-      "runtime": "python"
+      "framework": "fastapi",
+      "entrypoint": "api/index.py"
     }
   },
   "rewrites": [

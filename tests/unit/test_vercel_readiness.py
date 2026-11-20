@@ -42,6 +42,10 @@ def test_vercel_json_configuration() -> None:
         assert "app" in services or "web" in services
         app_svc = services.get("app") or services.get("web", {})
         assert app_svc.get("outputDirectory") == "public"
+        assert app_svc.get("framework") == "fastapi", (
+            "Must explicitly specify framework to avoid Container/FastAPI ambiguity"
+        )
+        assert services.get("api", {}).get("framework") == "fastapi"
 
         rewrites = cfg.get("rewrites", [])
         assert len(rewrites) >= 2
