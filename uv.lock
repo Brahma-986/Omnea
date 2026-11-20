@@ -11,13 +11,11 @@ resolution-markers = [
 
 [manifest]
 members = [
-    "api",
     "omnea-platform",
     "procure-agents",
     "procure-context",
     "procure-core",
     "procure-ingress",
-    "workers",
 ]
 
 [[package]]
@@ -299,25 +297,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/98/7e457a3b014976887a050561955c0b76e1e7e2d6e27b78ecef2ef80518f2/anyio-4.16.0.tar.gz", hash = "sha256:59bb03251907983d1603d27c3087ddb1e93299ea2163adcdba37899a4fb12ffb", size = 310971, upload-time = "2026-11-01T11:20:07.282Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a9/16/7757fb84c819accc7d7e9af5291b261e4abb8627ee040f99e7d35ef2457a/anyio-4.16.0-py3-none-any.whl", hash = "sha256:c66ae634e0b8228396b801741beb3294326d4b6102f7bba4041c0dfb58c29026", size = 134521, upload-time = "2026-11-01T11:20:05.59Z" },
-]
-
-[[package]]
-name = "api"
-version = "0.1.0"
-source = { editable = "services/api" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "procure-core" },
-    { name = "procure-ingress" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "fastapi", specifier = ">=0.111.0" },
-    { name = "procure-core", editable = "packages/procure_core" },
-    { name = "procure-ingress", editable = "packages/procure_ingress" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
 ]
 
 [[package]]
@@ -2306,10 +2285,11 @@ name = "omnea-platform"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
-    { name = "api" },
     { name = "argon2-cffi" },
     { name = "cryptography" },
     { name = "email-validator" },
+    { name = "fastapi" },
+    { name = "httpx" },
     { name = "procure-agents" },
     { name = "procure-context" },
     { name = "procure-core" },
@@ -2319,7 +2299,7 @@ dependencies = [
     { name = "pypdf" },
     { name = "python-multipart" },
     { name = "rapidfuzz" },
-    { name = "workers" },
+    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.dev-dependencies]
@@ -2338,10 +2318,11 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "api", editable = "services/api" },
     { name = "argon2-cffi", specifier = ">=25.1.0" },
     { name = "cryptography", specifier = ">=50.0.2" },
     { name = "email-validator", specifier = ">=2.4.0" },
+    { name = "fastapi", specifier = ">=0.111.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "procure-agents", editable = "packages/procure_agents" },
     { name = "procure-context", editable = "packages/procure_context" },
     { name = "procure-core", editable = "packages/procure_core" },
@@ -2351,7 +2332,7 @@ requires-dist = [
     { name = "pypdf", specifier = ">=7.1.1" },
     { name = "python-multipart", specifier = ">=0.0.34" },
     { name = "rapidfuzz", specifier = ">=3.14.6" },
-    { name = "workers", editable = "services/workers" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -4165,29 +4146,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/29/3a/a05bc57eadcd7e8e072d917888128e6d22e1203984afb21a8da3198982fe/websockets-17.4-pp312-pypy312_pp80-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:868744c68e9342768888c7326604da2228c19bb6946aa46b5f9e1ac32ea8d40b", size = 218356, upload-time = "2026-10-30T15:10:31.432Z" },
     { url = "https://files.pythonhosted.org/packages/b2/49/eed86bfb8863093a82cbaa52c9159be1ce2374d5ace6fe1f8e8031567e7d/websockets-17.4-pp312-pypy312_pp80-win_amd64.whl", hash = "sha256:829bcaa90be8737c132d9515d6a466e8528e3b3d050d3f3466f36ea94d3beb48", size = 306838, upload-time = "2026-10-30T15:10:32.954Z" },
     { url = "https://files.pythonhosted.org/packages/eb/27/9db924cb0dbf22eade78d98fbae77790f9bf6bc729e6ab29aef9d68e4156/websockets-17.4-py3-none-any.whl", hash = "sha256:c6bd2c9781915592b209160d0f017d4c7c82ad53075e6b0c24d2a89299e7f9e9", size = 212900, upload-time = "2026-10-30T15:10:34.482Z" },
-]
-
-[[package]]
-name = "workers"
-version = "0.1.0"
-source = { editable = "services/workers" }
-dependencies = [
-    { name = "httpx" },
-    { name = "procure-agents" },
-    { name = "procure-context" },
-    { name = "procure-core" },
-    { name = "procure-ingress" },
-    { name = "temporalio" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "httpx", specifier = ">=0.27.0" },
-    { name = "procure-agents", editable = "packages/procure_agents" },
-    { name = "procure-context", editable = "packages/procure_context" },
-    { name = "procure-core", editable = "packages/procure_core" },
-    { name = "procure-ingress", editable = "packages/procure_ingress" },
-    { name = "temporalio", specifier = ">=1.6.0" },
 ]
 
 [[package]]

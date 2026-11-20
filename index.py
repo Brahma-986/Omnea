@@ -1,7 +1,8 @@
 """Vercel Serverless Function entry point for Omnea Procure OS FastAPI Application.
 
 This file provides the primary entrypoint for Vercel's Python runtime (@vercel/python).
-It exposes the ASGI `app` instance from the installed `api` package.
+It configures Python search paths to include all monorepo workspace packages and services,
+and exposes the ASGI `app` instance.
 """
 
 from __future__ import annotations
@@ -9,9 +10,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# Fallback: if running in local development where packages are editable or loose,
-# ensure repository workspace directories are reachable
+# Compute repository root directory dynamically at runtime
 ROOT_DIR = Path(__file__).resolve().parent
+
+# Add workspace packages and services to Python sys.path
 WORKSPACE_DIRS = [
     ROOT_DIR / "packages" / "procure_core" / "src",
     ROOT_DIR / "packages" / "procure_ingress" / "src",
@@ -23,9 +25,8 @@ WORKSPACE_DIRS = [
 
 for d in WORKSPACE_DIRS:
     d_str = str(d)
-    # Append at the end (not insert at 0) so site-packages has priority in production builds
     if d.exists() and d_str not in sys.path:
-        sys.path.append(d_str)
+        sys.path.insert(0, d_str)
 
 from api.main import app  # noqa: E402
 
