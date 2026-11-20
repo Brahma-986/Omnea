@@ -7,7 +7,7 @@
     "api": {
       "root": ".",
       "framework": "fastapi",
-      "entrypoint": "api/index.py",
+      "entrypoint": "index.py",
       "bindings": [
         {
           "type": "service",

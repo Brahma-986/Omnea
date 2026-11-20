@@ -13,9 +13,9 @@ from procure_core.security.malware_scanner import QuarantineManager
 from procure_core.security.secrets import EncryptedFileSecretsManager
 
 
-def _get_vercel_app() -> Any:
+def _get_vercel_app(entrypoint: str = "index.py") -> Any:
     """Load the ASGI application instance exactly as Vercel Python runtime does."""
-    spec = importlib.util.spec_from_file_location("vercel_index", Path("api/index.py").resolve())
+    spec = importlib.util.spec_from_file_location("vercel_index", Path(entrypoint).resolve())
     assert spec is not None and spec.loader is not None
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -23,10 +23,11 @@ def _get_vercel_app() -> Any:
 
 
 def test_api_index_vercel_entrypoint() -> None:
-    """Verify api/index.py loads the FastAPI application without import errors."""
-    app = _get_vercel_app()
-    assert app is not None
-    assert app.title == "omnea-procure-os"
+    """Verify index.py and api/index.py load the FastAPI application without import errors."""
+    app1 = _get_vercel_app("index.py")
+    assert app1 is not None and app1.title == "omnea-procure-os"
+    app2 = _get_vercel_app("api/index.py")
+    assert app2 is not None and app2.title == "omnea-procure-os"
 
 
 def test_vercel_json_configuration() -> None:
