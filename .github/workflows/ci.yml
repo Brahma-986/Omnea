@@ -278,7 +278,7 @@ jobs:
         run: uv run playwright install --with-deps chromium
 
       - name: Run Playwright E2E Tests
-        run: uv run pytest tests/e2e/test_swagger_playwright_csp.py tests/e2e/test_stage2_e2e_playwright.py -v --timeout=60
+        run: uv run pytest tests/e2e/test_swagger_playwright_csp.py tests/e2e/test_stage2_e2e_playwright.py tests/e2e/test_sse_playwright.py tests/e2e/test_stage9_live_acceptance.py -v --timeout=60
 
   # ---------------------------------------------------------------------------
   # 8. Container Build & Security Scan
