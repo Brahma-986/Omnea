@@ -45,7 +45,7 @@ async def check_postgres(settings: Settings | None = None) -> DependencyStatus:
             await conn.execute(text("SELECT 1;"))
 
     try:
-        await asyncio.wait_for(_probe(), timeout=3.0)
+        await asyncio.wait_for(_probe(), timeout=5.0)
         latency_ms = round((time.perf_counter() - start) * 1000, 2)
         return DependencyStatus(name="postgres", healthy=True, latency_ms=latency_ms)
     except Exception as exc:

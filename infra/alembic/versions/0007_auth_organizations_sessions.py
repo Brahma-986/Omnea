@@ -145,13 +145,34 @@ def upgrade() -> None:
         );
         CREATE INDEX IF NOT EXISTS ix_user_role_assignments_tenant_user ON user_role_assignments (tenant_id, user_id);
 
-        -- 11. Seed legal_reviewer role and new permissions
+        -- 11. RBAC tables and seed legal_reviewer role and new permissions
+        CREATE TABLE IF NOT EXISTS rbac_roles (
+            role_name VARCHAR(64) PRIMARY KEY,
+            description TEXT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS rbac_permissions (
+            id VARCHAR(64) PRIMARY KEY,
+            description TEXT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+
+        CREATE TABLE IF NOT EXISTS rbac_role_permissions (
+            role_name VARCHAR(64) NOT NULL REFERENCES rbac_roles(role_name) ON DELETE CASCADE,
+            permission_id VARCHAR(64) NOT NULL REFERENCES rbac_permissions(id) ON DELETE CASCADE,
+            PRIMARY KEY (role_name, permission_id)
+        );
+
         INSERT INTO rbac_roles (role_name, description)
-        VALUES ('legal_reviewer', 'Legal counsel reviewing contracts, MSAs, and regulatory compliance')
+        VALUES
+            ('legal_reviewer', 'Legal counsel reviewing contracts, MSAs, and regulatory compliance'),
+            ('tenant_admin', 'Tenant administrator with full control over tenant users and settings')
         ON CONFLICT (role_name) DO NOTHING;
 
         INSERT INTO rbac_permissions (id, description)
         VALUES
+            ('requests:read', 'Read requests within tenant'),
             ('legal:review', 'Review legal contracts and regulatory compliance'),
             ('contracts:read', 'Read contracts and terms'),
             ('contracts:review', 'Review and approve contracts'),
@@ -240,14 +261,15 @@ def upgrade() -> None:
         -- Grants to app roles
         GRANT ALL PRIVILEGES ON organizations, users, credentials, email_verifications,
             password_resets, sessions, invitations, totp_secrets, login_attempts,
-            user_role_assignments TO procure_admin;
+            user_role_assignments, rbac_roles, rbac_permissions, rbac_role_permissions TO procure_admin;
 
         GRANT SELECT, INSERT, UPDATE, DELETE ON organizations, users, credentials,
             email_verifications, password_resets, sessions, invitations,
-            totp_secrets, login_attempts, user_role_assignments TO procure_workflow;
+            totp_secrets, login_attempts, user_role_assignments,
+            rbac_roles, rbac_permissions, rbac_role_permissions TO procure_workflow;
 
         GRANT SELECT ON organizations, users, sessions, invitations,
-            user_role_assignments TO procure_reviewer;
+            user_role_assignments, rbac_roles, rbac_permissions, rbac_role_permissions TO procure_reviewer;
         """
     )
 
@@ -255,6 +277,9 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.execute(
         """
+        DROP TABLE IF EXISTS rbac_role_permissions CASCADE;
+        DROP TABLE IF EXISTS rbac_permissions CASCADE;
+        DROP TABLE IF EXISTS rbac_roles CASCADE;
         DROP TABLE IF EXISTS login_attempts CASCADE;
         DROP TABLE IF EXISTS totp_secrets CASCADE;
         DROP TABLE IF EXISTS invitations CASCADE;

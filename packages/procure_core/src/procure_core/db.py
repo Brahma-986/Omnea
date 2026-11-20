@@ -3,6 +3,7 @@
 import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -33,12 +34,28 @@ def get_async_engine(settings: Settings | None = None) -> AsyncEngine:
             or os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
             or os.getenv("SERVERLESS", "").lower() in ("1", "true", "yes")
         )
+        connect_args: dict[str, Any] = {}
+        db_url_str = str(cfg.async_database_url)
+        if (
+            is_serverless
+            or "pooler.supabase.com" in db_url_str
+            or ":6543" in db_url_str
+            or "pgbouncer" in db_url_str.lower()
+        ):
+            connect_args.update(
+                {
+                    "statement_cache_size": 0,
+                    "prepared_statement_cache_size": 0,
+                }
+            )
+
         if is_serverless:
             from sqlalchemy.pool import NullPool
 
             _engine = create_async_engine(
                 cfg.async_database_url,
                 poolclass=NullPool,
+                connect_args=connect_args,
                 echo=(cfg.APP_ENV == "development" and cfg.LOG_LEVEL == "DEBUG"),
             )
         else:
@@ -47,6 +64,7 @@ def get_async_engine(settings: Settings | None = None) -> AsyncEngine:
                 pool_pre_ping=True,
                 pool_size=10,
                 max_overflow=20,
+                connect_args=connect_args,
                 echo=(cfg.APP_ENV == "development" and cfg.LOG_LEVEL == "DEBUG"),
             )
     return _engine

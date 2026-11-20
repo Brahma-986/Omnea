@@ -5,7 +5,7 @@ import sys
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import create_engine, pool
 
 # Ensure packages are importable
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,14 +24,19 @@ target_metadata = Base.metadata
 
 # Inject database URL from pydantic-settings
 settings = get_settings()
-config.set_main_option("sqlalchemy.url", settings.sync_database_url)
+sync_url = settings.sync_database_url
+# If targeting a pgbouncer transaction pooler (port 6543), adapt to session pooler (port 5432) for DDL migrations
+if ":6543" in sync_url:
+    sync_url = sync_url.replace(":6543", ":5432")
+
+# configparser requires escaping '%' as '%%' to prevent interpolation errors with encoded passwords
+config.set_main_option("sqlalchemy.url", sync_url.replace("%", "%%"))
 
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=sync_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -43,9 +48,8 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode using sync engine."""
-    connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    connectable = create_engine(
+        sync_url,
         poolclass=pool.NullPool,
     )
 
