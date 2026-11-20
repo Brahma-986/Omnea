@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from decimal import Decimal
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -136,11 +136,7 @@ async def test_commit_exceeding_amount_refused(db_session: AsyncSession) -> None
     nested = await db_session.begin_nested()
     with pytest.raises(Exception) as exc_over:
         await db_session.execute(
-            text(
-                "UPDATE department_budgets "
-                "SET committed = committed + 3000.0000 "
-                "WHERE id = :id"
-            ),
+            text("UPDATE department_budgets SET committed = committed + 3000.0000 WHERE id = :id"),
             {"id": bgt_id},
         )
         await db_session.flush()

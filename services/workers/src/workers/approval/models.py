@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
 from typing import Any, Literal
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from procure_agents.approval.models import (
@@ -47,7 +47,15 @@ class HumanDecisionSignal(BaseModel):
 class WorkflowExecutionResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    status: Literal["approved", "rejected", "expired", "cancelled", "failed", "awaiting_entity_review", "in_review"]
+    status: Literal[
+        "approved",
+        "rejected",
+        "expired",
+        "cancelled",
+        "failed",
+        "awaiting_entity_review",
+        "in_review",
+    ]
     final_verdict: Literal["approve", "reject", "needs_human"]
     verdicts: dict[str, ReviewerVerdict] = Field(default_factory=dict)
     reservation_action: Literal["committed", "released", "none"] = "none"

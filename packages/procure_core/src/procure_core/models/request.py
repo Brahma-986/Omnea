@@ -2,6 +2,7 @@
 
 import uuid
 from datetime import datetime
+from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -36,6 +37,29 @@ class RequestModel(Base, TenantMixin, TimestampMixin):
         back_populates="request",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def estimated_spend(self) -> Decimal | None:
+        from decimal import Decimal
+
+        val = (self.payload or {}).get("estimated_spend")
+        if val is None:
+            val = (self.payload or {}).get("amount")
+        if val is not None:
+            return Decimal(str(val))
+        return None
+
+    @property
+    def currency(self) -> str:
+        return (self.payload or {}).get("currency", "USD")
+
+    @property
+    def vendor_name(self) -> str:
+        return (self.payload or {}).get("vendor_name", "Vendor")
+
+    @property
+    def department(self) -> str:
+        return (self.payload or {}).get("department", "Engineering")
 
 
 class ApprovalModel(Base, TenantMixin, TimestampMixin):

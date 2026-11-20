@@ -1,0 +1,189 @@
+# Render Blueprint Specification for Omnea Procurement Platform
+# API, Background Workers, PostgreSQL + pgvector, Temporal Cloud, S3, and Safeguards
+version: "1"
+
+databases:
+  - name: omnea-postgres
+    databaseName: procure_os
+    user: postgres
+    region: oregon
+    plan: starter
+    postgresMajorVersion: "16"
+    ipAllowList: [] # Deny all external direct inbound access; internal network only
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Omnea API & Static SPA Gateway Service
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: omnea-api
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: "pip install uv && uv sync --frozen --all-packages"
+    preDeployCommand: "uv run alembic -c infra/alembic/alembic.ini upgrade head"
+    startCommand: "uv run uvicorn api.main:app --host 0.0.0.0 --port $PORT --workers 2"
+    healthCheckPath: /health
+    envVars:
+      - key: APP_NAME
+        value: omnea-procure-os
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Database (PostgreSQL with pgvector)
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: omnea-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: omnea-postgres
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: omnea-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: omnea-postgres
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: omnea-postgres
+          property: database
+
+      # Cryptographic secrets
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: CSRF_SECRET_KEY
+        generateValue: true
+
+      # Temporal Cloud Orchestration (via env vars)
+      - key: TEMPORAL_TARGET_HOST
+        sync: false # e.g. omnea-prod.tmprl.cloud:7233
+      - key: TEMPORAL_NAMESPACE
+        sync: false # e.g. omnea-prod.default
+      - key: TEMPORAL_CERT_DATA
+        sync: false # mTLS client certificate PEM
+      - key: TEMPORAL_KEY_DATA
+        sync: false # mTLS client private key PEM
+
+      # Object Storage (S3-compatible: AWS S3 / Cloudflare R2 / MinIO)
+      - key: S3_ENDPOINT_URL
+        sync: false # e.g. https://<account_id>.r2.cloudflarestorage.com or empty for AWS
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET_ATTACHMENTS
+        value: procure-attachments
+      - key: S3_REGION_NAME
+        value: us-east-1
+
+      # Email Delivery Provider (Resend / Postmark / SendGrid / AWS SES)
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        value: notifications@omnea.ai
+
+      # Public Deployment Safeguards: Hard Rate Limits & LLM Spend Caps
+      - key: RATE_LIMIT_GLOBAL_PER_MIN
+        value: "1200"
+      - key: RATE_LIMIT_TENANT_PER_MIN
+        value: "300"
+      - key: RATE_LIMIT_IP_PER_MIN
+        value: "120"
+      - key: LLM_GLOBAL_DAILY_BUDGET_USD
+        value: "25.00"
+      - key: LLM_TENANT_DAILY_BUDGET_USD
+        value: "5.00"
+
+      # LLM Provider Configuration
+      - key: LLM_MODEL
+        value: "gemini/gemini-1.5-flash"
+      - key: LLM_API_KEY
+        sync: false
+
+  # ---------------------------------------------------------------------------
+  # 2. Omnea Background Worker Service
+  # ---------------------------------------------------------------------------
+  - type: worker
+    name: omnea-worker
+    runtime: python
+    region: oregon
+    plan: starter
+    buildCommand: "pip install uv && uv sync --frozen --all-packages"
+    startCommand: "uv run python -m workers.cli"
+    envVars:
+      - key: APP_NAME
+        value: omnea-procure-workers
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Database
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: omnea-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: omnea-postgres
+          property: port
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: omnea-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: omnea-postgres
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: omnea-postgres
+          property: database
+
+      # Temporal Cloud
+      - key: TEMPORAL_TARGET_HOST
+        sync: false
+      - key: TEMPORAL_NAMESPACE
+        sync: false
+      - key: TEMPORAL_CERT_DATA
+        sync: false
+      - key: TEMPORAL_KEY_DATA
+        sync: false
+
+      # S3 Storage
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_BUCKET_ATTACHMENTS
+        value: procure-attachments
+      - key: S3_REGION_NAME
+        value: us-east-1
+
+      # Email
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: RESEND_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        value: notifications@omnea.ai
+
+      # Spend Caps & Guardrails
+      - key: LLM_GLOBAL_DAILY_BUDGET_USD
+        value: "25.00"
+      - key: LLM_TENANT_DAILY_BUDGET_USD
+        value: "5.00"
+      - key: LLM_MODEL
+        value: "gemini/gemini-1.5-flash"
+      - key: LLM_API_KEY
+        sync: false

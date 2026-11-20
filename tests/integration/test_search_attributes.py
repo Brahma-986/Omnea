@@ -5,31 +5,28 @@ from __future__ import annotations
 import asyncio
 import uuid
 from decimal import Decimal
+
 import pytest
+from temporalio import workflow
+from temporalio.common import SearchAttributeKey
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
-from temporalio import workflow
-from temporalio.api.operatorservice.v1 import AddSearchAttributesRequest
-from temporalio.api.enums.v1 import IndexedValueType
-from temporalio.common import SearchAttributeKey
 
-from workers.approval.models import (
-    ApprovalWorkflowInput,
-    ProcurementIntentSummary,
-    ApprovalContextSnapshot,
-    ApprovalPolicyRules,
-    BudgetSnapshot,
-)
-from workers.approval.workflows import ProcurementApprovalWorkflow
-from workers.approval.search_attributes import (
-    REQUIRED_SEARCH_ATTRIBUTES,
-    preflight_check_search_attributes,
-)
 from tests.integration.test_phase4_workflow_engine import (
-    APPROVAL_WORKFLOWS,
     APPROVAL_ACTIVITIES,
+    APPROVAL_WORKFLOWS,
     _seed_test_data,
 )
+from workers.approval.models import (
+    ApprovalContextSnapshot,
+    ApprovalPolicyRules,
+    ApprovalWorkflowInput,
+    ProcurementIntentSummary,
+)
+from workers.approval.search_attributes import (
+    preflight_check_search_attributes,
+)
+from workers.approval.workflows import ProcurementApprovalWorkflow
 
 
 @workflow.defn
@@ -38,9 +35,9 @@ class UnregisteredSearchAttrWorkflow:
 
     @workflow.run
     async def run(self) -> None:
-        workflow.upsert_search_attributes([
-            SearchAttributeKey.for_keyword("NonexistentSearchAttrX").value_set("invalid_val")
-        ])
+        workflow.upsert_search_attributes(
+            [SearchAttributeKey.for_keyword("NonexistentSearchAttrX").value_set("invalid_val")]
+        )
 
 
 @pytest.mark.asyncio
@@ -61,8 +58,10 @@ async def test_workflow_fails_when_search_attribute_unregistered() -> None:
             # Server blocks workflow activation due to undefined search attribute; execution cannot complete
             with pytest.raises((Exception, asyncio.TimeoutError)) as exc_info:
                 await asyncio.wait_for(handle.result(), timeout=1.5)
-            print(f"\n[UNREGISTERED SEARCH ATTRIBUTE REJECTION EVIDENCE]")
-            print(f"  Workflow blocked from completing due to invalid search attribute (timed out as expected: {exc_info.type})")
+            print("\n[UNREGISTERED SEARCH ATTRIBUTE REJECTION EVIDENCE]")
+            print(
+                f"  Workflow blocked from completing due to invalid search attribute (timed out as expected: {exc_info.type})"
+            )
 
 
 @pytest.mark.asyncio
@@ -80,7 +79,7 @@ async def test_all_seven_search_attributes_registered_and_indexed() -> None:
         assert "NeedsHuman" in preflight_result
         assert "EstimatedSpend" in preflight_result
 
-        print(f"\n[SEARCH ATTRIBUTE PREFLIGHT & REGISTRATION EVIDENCE]")
+        print("\n[SEARCH ATTRIBUTE PREFLIGHT & REGISTRATION EVIDENCE]")
         print("  Preflight verified all 7 search attributes:")
         for k, v in preflight_result.items():
             print(f"    - {k}: {v}")
@@ -131,4 +130,6 @@ async def test_all_seven_search_attributes_registered_and_indexed() -> None:
             )
             res = await handle.result()
             assert res["status"] in ("approved", "expired")
-            print(f"  Workflow Execution completed successfully with all 7 Search Attributes active (status={res['status']}).")
+            print(
+                f"  Workflow Execution completed successfully with all 7 Search Attributes active (status={res['status']})."
+            )

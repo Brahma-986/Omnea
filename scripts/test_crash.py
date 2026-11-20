@@ -1,6 +1,5 @@
 import asyncio
 import sys
-from datetime import timedelta
 import uuid
 from decimal import Decimal
 
@@ -8,9 +7,7 @@ sys.path.insert(0, ".")
 from sqlalchemy import text
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
-from tests.integration.test_phase4_workflow_engine import APPROVAL_ACTIVITIES, APPROVAL_WORKFLOWS, _seed_test_data
-from workers.approval.models import ApprovalWorkflowInput, HumanDecisionSignal
-from workers.approval.workflows import ProcurementApprovalWorkflow
+
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
     ApprovalPolicyRules,
@@ -20,6 +17,14 @@ from procure_agents.approval.models import (
     SecurityReviewSummary,
 )
 from procure_core.db import get_async_session_factory
+from tests.integration.test_phase4_workflow_engine import (
+    APPROVAL_ACTIVITIES,
+    APPROVAL_WORKFLOWS,
+    _seed_test_data,
+)
+from workers.approval.models import ApprovalWorkflowInput, HumanDecisionSignal
+from workers.approval.workflows import ProcurementApprovalWorkflow
+
 
 async def test_crash():
     async with await WorkflowEnvironment.start_time_skipping() as env:
@@ -46,8 +51,17 @@ async def test_crash():
             context=ApprovalContextSnapshot(
                 snapshot_hash="h_crash_1",
                 as_of="2026-11-13T00:00:00Z",
-                citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                citations=[
+                    CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")
+                ],
+                security_reviews=[
+                    SecurityReviewSummary(
+                        doc_type="SOC2",
+                        status="compliant",
+                        audit_period_end="2027-01-01",
+                        is_fresh=True,
+                    )
+                ],
             ),
             policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
             budget=BudgetSnapshot(
@@ -85,11 +99,16 @@ async def test_crash():
             for i in range(50):
                 async with session_factory() as session:
                     ts = await session.scalar(
-                        text("SELECT slack_message_ts FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND slack_message_ts IS NOT NULL"),
+                        text(
+                            "SELECT slack_message_ts FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND slack_message_ts IS NOT NULL"
+                        ),
                         {"t": tenant_id, "id": req_id},
                     )
                     if ts:
-                        print(f"Reached awaiting_human with Slack notification posted! ts={ts}", flush=True)
+                        print(
+                            f"Reached awaiting_human with Slack notification posted! ts={ts}",
+                            flush=True,
+                        )
                         break
                 await asyncio.sleep(0.1)
 
@@ -113,10 +132,13 @@ async def test_crash():
                 idempotency_key=f"{tenant_id}:{req_id}:sig_resume",
             )
             print("Sending signal to Worker 2...", flush=True)
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json")
+            )
             print("Signal sent, awaiting result...", flush=True)
             res = await handle.result()
             print("WORKFLOW COMPLETED UNDER WORKER 2:", res["status"], flush=True)
+
 
 if __name__ == "__main__":
     asyncio.run(test_crash())

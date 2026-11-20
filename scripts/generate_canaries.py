@@ -5,9 +5,11 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tests.eval.generate_approval_golden import make_case
+
 
 def generate_canaries():
     cases = []
@@ -318,6 +320,7 @@ def generate_canaries():
         for c in cases:
             f.write(json.dumps(c) + "\n")
     print(f"Generated {len(cases)} canary cases in {out_path}")
+
 
 if __name__ == "__main__":
     generate_canaries()

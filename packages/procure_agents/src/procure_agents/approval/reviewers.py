@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
@@ -63,7 +63,9 @@ class FinanceReviewer:
             return ReviewerVerdict(
                 reviewer_type="finance",
                 verdict="needs_human",
-                reasons=["Requester cannot self-approve Finance step; routed to independent approver"],
+                reasons=[
+                    "Requester cannot self-approve Finance step; routed to independent approver"
+                ],
                 suggested_assignee="cfo_or_delegate",
             )
 
@@ -131,27 +133,50 @@ class FinanceReviewer:
             return ReviewerVerdict(
                 reviewer_type="finance",
                 verdict="needs_human",
-                reasons=["Projection lag indicates uncommitted spend outbox events; routed to Finance"],
+                reasons=[
+                    "Projection lag indicates uncommitted spend outbox events; routed to Finance"
+                ],
                 suggested_assignee="finance_director",
             )
         if context.snapshot_age_seconds > 3600:
             return ReviewerVerdict(
                 reviewer_type="finance",
                 verdict="needs_human",
-                reasons=[f"Snapshot age ({context.snapshot_age_seconds}s) exceeds 3600s freshness window; routed to Finance"],
+                reasons=[
+                    f"Snapshot age ({context.snapshot_age_seconds}s) exceeds 3600s freshness window; routed to Finance"
+                ],
                 suggested_assignee="finance_director",
             )
-        if any(t in ("quote_discrepancy", "currency_settlement_mismatch", "fiscal_year_mismatch", "contractor_requester") for t in intent.tags) or "contractor" in intent.requester_id or (budget and budget.period != "FY2026"):
+        if (
+            any(
+                t
+                in (
+                    "quote_discrepancy",
+                    "currency_settlement_mismatch",
+                    "fiscal_year_mismatch",
+                    "contractor_requester",
+                )
+                for t in intent.tags
+            )
+            or "contractor" in intent.requester_id
+            or (budget and budget.period != "FY2026")
+        ):
             return ReviewerVerdict(
                 reviewer_type="finance",
                 verdict="needs_human",
-                reasons=["Finance edge case detected (discrepancy/period mismatch/contractor/currency); routed to Finance"],
+                reasons=[
+                    "Finance edge case detected (discrepancy/period mismatch/contractor/currency); routed to Finance"
+                ],
                 suggested_assignee="finance_director",
             )
 
         # Ground evidence in citations
         for c in context.citations:
-            if "spend" in c.fact.lower() or "budget" in c.fact.lower() or "contract" in c.fact.lower():
+            if (
+                "spend" in c.fact.lower()
+                or "budget" in c.fact.lower()
+                or "contract" in c.fact.lower()
+            ):
                 evidence_ids.append(c.citation_id)
 
         verdict = ReviewerVerdict(
@@ -177,7 +202,7 @@ class SecurityReviewer:
         fault_injection: dict[str, Any] | None = None,
         heartbeat_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ReviewerVerdict:
-        reasons: list[str] = []
+        # SecurityReviewer implementation
         evidence_ids: list[str] = []
         faults = fault_injection or {}
 
@@ -198,7 +223,9 @@ class SecurityReviewer:
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=[f"Adversarial instruction detected in {faults.get('injection_channel')} payload"],
+                reasons=[
+                    f"Adversarial instruction detected in {faults.get('injection_channel')} payload"
+                ],
                 suggested_assignee="security_engineer",
             )
 
@@ -207,7 +234,9 @@ class SecurityReviewer:
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=[f"Fail-closed: Reviewer encountered exception ({faults.get('simulate_reviewer_exception')})"],
+                reasons=[
+                    f"Fail-closed: Reviewer encountered exception ({faults.get('simulate_reviewer_exception')})"
+                ],
                 suggested_assignee="security_engineer",
             )
 
@@ -221,7 +250,9 @@ class SecurityReviewer:
                 return ReviewerVerdict(
                     reviewer_type="security",
                     verdict="reject",
-                    reasons=["Critical unresolved security vulnerability with expired remediation period"],
+                    reasons=[
+                        "Critical unresolved security vulnerability with expired remediation period"
+                    ],
                     is_hard_reject=True,
                     hard_reject_trigger="hard_reject_security_vulnerability",
                 )
@@ -229,12 +260,16 @@ class SecurityReviewer:
                 return ReviewerVerdict(
                     reviewer_type="security",
                     verdict="needs_human",
-                    reasons=["Vulnerability remediation required but remediation deadline has not elapsed"],
+                    reasons=[
+                        "Vulnerability remediation required but remediation deadline has not elapsed"
+                    ],
                     suggested_assignee="security_team",
                 )
 
-        # 4. Check for absent security review
-        if not context.security_reviews or all(sr.status in ("none", "not_checked") for sr in context.security_reviews):
+        # 4. Check for absent, quarantined, or unverified security reviews
+        if not context.security_reviews or all(
+            sr.status in ("none", "not_checked") for sr in context.security_reviews
+        ):
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
@@ -242,13 +277,57 @@ class SecurityReviewer:
                 suggested_assignee="security_team",
             )
 
+        # Stage 5 Hardening: Quarantined document check
+        for sr in context.security_reviews:
+            if sr.quarantined or sr.status == "quarantined":
+                return ReviewerVerdict(
+                    reviewer_type="security",
+                    verdict="reject",
+                    reasons=[
+                        "Vendor security document has been quarantined for hostile/malicious payload"
+                    ],
+                    is_hard_reject=True,
+                    hard_reject_trigger="hard_reject_security_quarantined",
+                )
+
+        # Stage 5 Hardening: Safety scan check
+        for sr in context.security_reviews:
+            if not sr.is_scanned:
+                return ReviewerVerdict(
+                    reviewer_type="security",
+                    verdict="needs_human",
+                    reasons=[
+                        "Vendor security review has not passed required structural safety scan"
+                    ],
+                    suggested_assignee="security_team",
+                )
+
+        # Stage 5 Hardening: Every required domain must have verified quotes
+        for sr in context.security_reviews:
+            if not sr.has_verified_quotes or sr.missing_domains:
+                missing = (
+                    ", ".join(sr.missing_domains)
+                    if sr.missing_domains
+                    else "unverified control quotes"
+                )
+                return ReviewerVerdict(
+                    reviewer_type="security",
+                    verdict="needs_human",
+                    reasons=[
+                        f"Document cannot support approval: missing verified quotes for required control domains ({missing})"
+                    ],
+                    suggested_assignee="security_team",
+                )
+
         # 5. Check audit freshness & valid audit_period_end
         for sr in context.security_reviews:
             if sr.audit_period_end is None or not sr.is_fresh or sr.freshness_status == "stale":
                 return ReviewerVerdict(
                     reviewer_type="security",
                     verdict="needs_human",
-                    reasons=["Vendor security review is stale, expired, or missing audit period end"],
+                    reasons=[
+                        "Vendor security review is stale, expired, or missing audit period end"
+                    ],
                     suggested_assignee="security_team",
                 )
 
@@ -267,26 +346,46 @@ class SecurityReviewer:
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=["Projection lag indicates unmerged security outbox events; routed to Security"],
+                reasons=[
+                    "Projection lag indicates unmerged security outbox events; routed to Security"
+                ],
                 suggested_assignee="security_team",
             )
         if context.snapshot_age_seconds > 3600:
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=[f"Snapshot age ({context.snapshot_age_seconds}s) exceeds 3600s; security review requires live refresh"],
+                reasons=[
+                    f"Snapshot age ({context.snapshot_age_seconds}s) exceeds 3600s; security review requires live refresh"
+                ],
                 suggested_assignee="security_team",
             )
         if (
-            any(t in ("merged_vendor", "survivor_unreviewed", "soc2_type1_only", "qualified_opinion", "missing_mfa_enforcement", "security_incident") for t in intent.tags)
+            any(
+                t
+                in (
+                    "merged_vendor",
+                    "survivor_unreviewed",
+                    "soc2_type1_only",
+                    "qualified_opinion",
+                    "missing_mfa_enforcement",
+                    "security_incident",
+                )
+                for t in intent.tags
+            )
             or any(sr.status == "qualified_opinion" for sr in context.security_reviews)
             or any(sr.doc_type == "SOC2_TYPE_I" for sr in context.security_reviews)
-            or any("incident" in c.fact.lower() or "breach" in c.fact.lower() for c in context.citations)
+            or any(
+                "incident" in c.fact.lower() or "breach" in c.fact.lower()
+                for c in context.citations
+            )
         ):
             return ReviewerVerdict(
                 reviewer_type="security",
                 verdict="needs_human",
-                reasons=["Security edge case detected (incident/qualified report/missing MFA/survivor/Type I); routed to Security"],
+                reasons=[
+                    "Security edge case detected (incident/qualified report/missing MFA/survivor/Type I); routed to Security"
+                ],
                 suggested_assignee="security_team",
             )
 
@@ -323,7 +422,7 @@ class LegalReviewer:
         fault_injection: dict[str, Any] | None = None,
         heartbeat_callback: Callable[[dict[str, Any]], None] | None = None,
     ) -> ReviewerVerdict:
-        reasons: list[str] = []
+        # SecurityReviewer implementation
         evidence_ids: list[str] = []
         faults = fault_injection or {}
 
@@ -365,7 +464,9 @@ class LegalReviewer:
                 return ReviewerVerdict(
                     reviewer_type="legal",
                     verdict="reject",
-                    reasons=["Prior contract with vendor was terminated for cause / material breach"],
+                    reasons=[
+                        "Prior contract with vendor was terminated for cause / material breach"
+                    ],
                     is_hard_reject=True,
                     hard_reject_trigger="hard_reject_contract_terminated",
                 )
@@ -415,14 +516,33 @@ class LegalReviewer:
                 suggested_assignee="legal_counsel",
             )
         if (
-            any(t in ("contract_conflict", "auto_renew_risk", "subsidiary_name_drift", "imminent_contract_expiry", "overlapping_contracts", "missing_scc_clauses", "fcpa_investigation", "uncapped_liability", "fast_track_cap_exceeded") for t in intent.tags)
+            any(
+                t
+                in (
+                    "contract_conflict",
+                    "auto_renew_risk",
+                    "subsidiary_name_drift",
+                    "imminent_contract_expiry",
+                    "overlapping_contracts",
+                    "missing_scc_clauses",
+                    "fcpa_investigation",
+                    "uncapped_liability",
+                    "fast_track_cap_exceeded",
+                )
+                for t in intent.tags
+            )
             or any(c.status == "terminated" for c in context.active_contracts)
-            or any("fcpa" in c.fact.lower() or "investigation" in c.fact.lower() for c in context.citations)
+            or any(
+                "fcpa" in c.fact.lower() or "investigation" in c.fact.lower()
+                for c in context.citations
+            )
         ):
             return ReviewerVerdict(
                 reviewer_type="legal",
                 verdict="needs_human",
-                reasons=["Legal edge case detected (contract conflict/auto renew/missing SCC/FCPA probe/uncapped liability/fast-track cap); routed to Legal"],
+                reasons=[
+                    "Legal edge case detected (contract conflict/auto renew/missing SCC/FCPA probe/uncapped liability/fast-track cap); routed to Legal"
+                ],
                 suggested_assignee="legal_counsel",
             )
 

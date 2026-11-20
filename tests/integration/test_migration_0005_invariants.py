@@ -233,9 +233,8 @@ async def test_parameterized_status_transition_matrix(
                 {"new_status": to_status, "id": req_id},
             )
             await db_session.flush()
-        assert (
-            f"Illegal request status transition from {from_status} to {to_status}"
-            in str(exc_illegal.value)
+        assert f"Illegal request status transition from {from_status} to {to_status}" in str(
+            exc_illegal.value
         )
         await nested.rollback()
 
@@ -378,7 +377,9 @@ async def test_approval_policy_immutability(db_session: AsyncSession) -> None:
     nested = await db_session.begin_nested()
     with pytest.raises(Exception) as exc_rules:
         await db_session.execute(
-            text("UPDATE approval_policies SET rules = '{\"threshold\": 999999}'::jsonb WHERE id = :id"),
+            text(
+                "UPDATE approval_policies SET rules = '{\"threshold\": 999999}'::jsonb WHERE id = :id"
+            ),
             {"id": pol_id},
         )
         await db_session.flush()
@@ -440,7 +441,9 @@ async def test_approval_step_terminal_immutability(db_session: AsyncSession) -> 
             {"id": step_id},
         )
         await db_session.flush()
-    assert "Terminal approval step status approved cannot be changed to rejected" in str(exc_term.value)
+    assert "Terminal approval step status approved cannot be changed to rejected" in str(
+        exc_term.value
+    )
     await nested.rollback()
 
 
@@ -585,4 +588,3 @@ async def test_approver_delegate_window_constraint(db_session: AsyncSession) -> 
         await db_session.flush()
     assert "chk_approver_delegate_window" in str(exc_part.value)
     await nested.rollback()
-

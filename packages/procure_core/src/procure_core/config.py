@@ -68,7 +68,7 @@ class Settings(BaseSettings):
     LLM_API_KEY: str = Field(default="")
     LLM_API_BASE: str | None = Field(default=None)
     LLM_MAX_TOKENS: int = Field(default=1024)
-    LLM_TIMEOUT_SECONDS: float = Field(default=20.0)
+    LLM_TIMEOUT_SECONDS: float = Field(default=45.0)
     LLM_MAX_RETRIES: int = Field(default=3)
     PROMPT_VERSION: str = Field(default="v1")
 
@@ -77,6 +77,38 @@ class Settings(BaseSettings):
     QUEUE_MAX_ATTEMPTS: int = Field(default=5)
     QUEUE_RETENTION_DAYS: int = Field(default=7)
     ATTACHMENT_MAX_SIZE_BYTES: int = Field(default=50 * 1024 * 1024)  # 50 MB
+
+    # Authentication & JWT
+    JWT_SECRET_KEY: str = Field(default="test_jwt_secret_key_change_in_production_min32bytes")
+    JWT_ALGORITHM: str = Field(default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7)
+
+    # Rate Limits & LLM Spend Caps (Public Deployment Protection)
+    RATE_LIMIT_GLOBAL_PER_MIN: int = Field(default=1200, description="Global rate limit per minute")
+    RATE_LIMIT_TENANT_PER_MIN: int = Field(
+        default=300, description="Per-tenant rate limit per minute"
+    )
+    RATE_LIMIT_IP_PER_MIN: int = Field(default=120, description="Per-IP rate limit per minute")
+    LLM_GLOBAL_DAILY_BUDGET_USD: float = Field(
+        default=25.00, description="Global daily cap on LLM costs across all tenants"
+    )
+    LLM_TENANT_DAILY_BUDGET_USD: float = Field(
+        default=5.00, description="Per-tenant daily cap on LLM costs"
+    )
+
+    # Email Delivery Provider (resend, postmark, ses, fake)
+    EMAIL_PROVIDER: str = Field(default="fake")
+    RESEND_API_KEY: str = Field(default="")
+    POSTMARK_SERVER_TOKEN: str = Field(default="")
+    AWS_SES_REGION: str = Field(default="us-east-1")
+    EMAIL_FROM_ADDRESS: str = Field(default="noreply@omnea.ai")
+
+    # SSO / OIDC Configuration
+    GOOGLE_CLIENT_ID: str = Field(default="")
+    GOOGLE_CLIENT_SECRET: str = Field(default="")
+    MICROSOFT_CLIENT_ID: str = Field(default="")
+    MICROSOFT_CLIENT_SECRET: str = Field(default="")
     ALLOWED_ATTACHMENT_TYPES: list[str] = Field(
         default=[
             "application/pdf",

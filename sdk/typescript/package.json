@@ -1,0 +1,13 @@
+{
+  "name": "@omnea/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript/JavaScript SDK for the Omnea Procurement Platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": ["omnea", "procurement", "sdk", "api"],
+  "author": "Omnea Engineering",
+  "license": "Apache-2.0"
+}

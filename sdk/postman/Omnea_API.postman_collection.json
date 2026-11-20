@@ -1,0 +1,280 @@
+{
+  "info": {
+    "_postman_id": "c1f76200-84dc-4e8c-8f10-9426f32e9a01",
+    "name": "Omnea Procurement Platform API",
+    "description": "Comprehensive REST API Collection for Omnea Developer Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "omnea_live_replace_with_your_api_key",
+      "type": "string"
+    },
+    {
+      "key": "tenantId",
+      "value": "default",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Requests",
+      "item": [
+        {
+          "name": "Submit Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Idempotency-Key", "value": "req_idem_{{$timestamp}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vendor_name\": \"Datadog, Inc.\",\n  \"estimated_spend\": \"48000.00\",\n  \"currency\": \"USD\",\n  \"department\": \"Engineering\",\n  \"description\": \"Annual observability tier renewal\",\n  \"justification\": \"Critical production monitoring\",\n  \"attachments\": []\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/requests", "host": ["{{baseUrl}}"], "path": ["api", "v1", "requests"] }
+          }
+        },
+        {
+          "name": "List Requests",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/requests?page=1&page_size=20", "host": ["{{baseUrl}}"], "path": ["api", "v1", "requests"] }
+          }
+        },
+        {
+          "name": "Get Request Detail",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/requests/:requestId", "host": ["{{baseUrl}}"], "path": ["api", "v1", "requests", ":requestId"], "variable": [{ "key": "requestId", "value": "" }] }
+          }
+        },
+        {
+          "name": "Get Request Decisions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/requests/:requestId/decisions", "host": ["{{baseUrl}}"], "path": ["api", "v1", "requests", ":requestId", "decisions"], "variable": [{ "key": "requestId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Approvals",
+      "item": [
+        {
+          "name": "List Pending Approvals",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/approvals/pending", "host": ["{{baseUrl}}"], "path": ["api", "v1", "approvals", "pending"] }
+          }
+        },
+        {
+          "name": "Decide Approval Step",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\",\n  \"reason\": \"Budget verified and terms acceptable\",\n  \"idempotency_key\": \"decide_{{$timestamp}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/approvals/:stepId/decide", "host": ["{{baseUrl}}"], "path": ["api", "v1", "approvals", ":stepId", "decide"], "variable": [{ "key": "stepId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Vendors",
+      "item": [
+        {
+          "name": "List Vendors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/vendors", "host": ["{{baseUrl}}"], "path": ["api", "v1", "vendors"] }
+          }
+        },
+        {
+          "name": "Get Vendor Relationships",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/vendors/:vendorId/relationships", "host": ["{{baseUrl}}"], "path": ["api", "v1", "vendors", ":vendorId", "relationships"], "variable": [{ "key": "vendorId", "value": "" }] }
+          }
+        },
+        {
+          "name": "Flag Vendor Risk",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"risk_type\": \"compliance\",\n  \"severity\": \"high\",\n  \"reason\": \"Expiring ISO certification\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/vendors/:vendorId/flag", "host": ["{{baseUrl}}"], "path": ["api", "v1", "vendors", ":vendorId", "flag"], "variable": [{ "key": "vendorId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Documents & TPRM",
+      "item": [
+        {
+          "name": "List Documents",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/documents", "host": ["{{baseUrl}}"], "path": ["api", "v1", "documents"] }
+          }
+        },
+        {
+          "name": "Get Document Assessment",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/documents/:docId/assessment", "host": ["{{baseUrl}}"], "path": ["api", "v1", "documents", ":docId", "assessment"], "variable": [{ "key": "docId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ERP & Reconciliation",
+      "item": [
+        {
+          "name": "Get ERP Sync Status",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/erp/status", "host": ["{{baseUrl}}"], "path": ["api", "v1", "erp", "status"] }
+          }
+        },
+        {
+          "name": "List Purchase Orders",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/erp/purchase-orders", "host": ["{{baseUrl}}"], "path": ["api", "v1", "erp", "purchase-orders"] }
+          }
+        },
+        {
+          "name": "Get Reconciliation Findings",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/reconciliation/findings", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reconciliation", "findings"] }
+          }
+        },
+        {
+          "name": "Run Reconciliation Audit",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/reconciliation/run", "host": ["{{baseUrl}}"], "path": ["api", "v1", "reconciliation", "run"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Outbound Webhooks",
+      "item": [
+        {
+          "name": "List Webhook Endpoints",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/webhooks/endpoints", "host": ["{{baseUrl}}"], "path": ["api", "v1", "webhooks", "endpoints"] }
+          }
+        },
+        {
+          "name": "Create Webhook Endpoint",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"https://webhook.site/my-endpoint\",\n  \"description\": \"Slack Bot Intake Endpoint\",\n  \"events\": [\"request.created\", \"request.approved\", \"request.rejected\"]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/webhooks/endpoints", "host": ["{{baseUrl}}"], "path": ["api", "v1", "webhooks", "endpoints"] }
+          }
+        },
+        {
+          "name": "List Webhook Deliveries",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/webhooks/deliveries?limit=50", "host": ["{{baseUrl}}"], "path": ["api", "v1", "webhooks", "deliveries"] }
+          }
+        },
+        {
+          "name": "Redeliver Webhook",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/webhooks/deliveries/:deliveryId/redeliver", "host": ["{{baseUrl}}"], "path": ["api", "v1", "webhooks", "deliveries", ":deliveryId", "redeliver"], "variable": [{ "key": "deliveryId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API Keys",
+      "item": [
+        {
+          "name": "List API Keys",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/api-keys", "host": ["{{baseUrl}}"], "path": ["api", "v1", "api-keys"] }
+          }
+        },
+        {
+          "name": "Create API Key",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"CI/CD Pipeline Key\",\n  \"scopes\": [\"requests:read\", \"requests:create\", \"vendors:read\"],\n  \"rate_limit_per_minute\": 120\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/api-keys", "host": ["{{baseUrl}}"], "path": ["api", "v1", "api-keys"] }
+          }
+        },
+        {
+          "name": "Revoke API Key",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/api-keys/:keyId/revoke", "host": ["{{baseUrl}}"], "path": ["api", "v1", "api-keys", ":keyId", "revoke"], "variable": [{ "key": "keyId", "value": "" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit & Agent Runs",
+      "item": [
+        {
+          "name": "Export Audit Log (JSON)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/audit/export?format=json&limit=500", "host": ["{{baseUrl}}"], "path": ["api", "v1", "audit", "export"] }
+          }
+        },
+        {
+          "name": "Export Audit Log (CSV)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/audit/export?format=csv&limit=500", "host": ["{{baseUrl}}"], "path": ["api", "v1", "audit", "export"] }
+          }
+        },
+        {
+          "name": "List Agent Runs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/agents/runs", "host": ["{{baseUrl}}"], "path": ["api", "v1", "agents", "runs"] }
+          }
+        }
+      ]
+    }
+  ]
+}

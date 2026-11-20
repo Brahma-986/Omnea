@@ -10,6 +10,7 @@ Covers:
 from __future__ import annotations
 
 from decimal import Decimal
+
 import pytest
 from pydantic import ValidationError
 
@@ -428,6 +429,7 @@ def test_clean_facts_typed_builder_schema_compliance() -> None:
 # Deterministic Nodes: rule_evaluator, budget_checker, verifier
 # =============================================================================
 
+
 def test_agent_cap_max_steps_fails_closed() -> None:
     """Deliberation loop hitting max_steps limit must fail closed to 'needs_human' with limit, observed reason, and heartbeat."""
     rules = ApprovalPolicyRules()
@@ -436,6 +438,7 @@ def test_agent_cap_max_steps_fails_closed() -> None:
     legal_reviewer = LegalReviewer(rules)
 
     heartbeat_events = []
+
     def record_heartbeat(data: dict) -> None:
         heartbeat_events.append(data)
 
@@ -452,14 +455,30 @@ def test_agent_cap_max_steps_fails_closed() -> None:
     context = ApprovalContextSnapshot(snapshot_hash="h_cap_1", as_of="2026-11-13T12:00:00Z")
 
     # Injected max_steps limit reached in graph deliberation loop
-    f_res = finance_reviewer.review(intent, context, None, fault_injection={"cap_exceeded": "max_steps"}, heartbeat_callback=record_heartbeat)
-    s_res = sec_reviewer.review(intent, context, fault_injection={"cap_exceeded": "max_steps"}, heartbeat_callback=record_heartbeat)
-    l_res = legal_reviewer.review(intent, context, fault_injection={"cap_exceeded": "max_steps"}, heartbeat_callback=record_heartbeat)
+    f_res = finance_reviewer.review(
+        intent,
+        context,
+        None,
+        fault_injection={"cap_exceeded": "max_steps"},
+        heartbeat_callback=record_heartbeat,
+    )
+    s_res = sec_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "max_steps"},
+        heartbeat_callback=record_heartbeat,
+    )
+    l_res = legal_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "max_steps"},
+        heartbeat_callback=record_heartbeat,
+    )
 
     assert f_res.verdict == "needs_human"
     assert s_res.verdict == "needs_human"
     assert l_res.verdict == "needs_human"
-    
+
     # 1. Exact limit and observed count in reason
     expected_reason = "cap_exceeded: max_steps limit reached in deliberation loop (limit: 10 steps, observed: 11 steps)"
     assert f_res.reasons[0] == expected_reason
@@ -479,6 +498,7 @@ def test_agent_cap_max_tokens_fails_closed() -> None:
     legal_reviewer = LegalReviewer(rules)
 
     heartbeat_events = []
+
     def record_heartbeat(data: dict) -> None:
         heartbeat_events.append(data)
 
@@ -494,9 +514,25 @@ def test_agent_cap_max_tokens_fails_closed() -> None:
     )
     context = ApprovalContextSnapshot(snapshot_hash="h_cap_2", as_of="2026-11-13T12:00:00Z")
 
-    f_res = finance_reviewer.review(intent, context, None, fault_injection={"cap_exceeded": "max_tokens"}, heartbeat_callback=record_heartbeat)
-    s_res = sec_reviewer.review(intent, context, fault_injection={"cap_exceeded": "max_tokens"}, heartbeat_callback=record_heartbeat)
-    l_res = legal_reviewer.review(intent, context, fault_injection={"cap_exceeded": "max_tokens"}, heartbeat_callback=record_heartbeat)
+    f_res = finance_reviewer.review(
+        intent,
+        context,
+        None,
+        fault_injection={"cap_exceeded": "max_tokens"},
+        heartbeat_callback=record_heartbeat,
+    )
+    s_res = sec_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "max_tokens"},
+        heartbeat_callback=record_heartbeat,
+    )
+    l_res = legal_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "max_tokens"},
+        heartbeat_callback=record_heartbeat,
+    )
 
     assert f_res.verdict == "needs_human"
     assert s_res.verdict == "needs_human"
@@ -519,6 +555,7 @@ def test_agent_cap_wall_clock_fails_closed() -> None:
     legal_reviewer = LegalReviewer(rules)
 
     heartbeat_events = []
+
     def record_heartbeat(data: dict) -> None:
         heartbeat_events.append(data)
 
@@ -534,9 +571,25 @@ def test_agent_cap_wall_clock_fails_closed() -> None:
     )
     context = ApprovalContextSnapshot(snapshot_hash="h_cap_3", as_of="2026-11-13T12:00:00Z")
 
-    f_res = finance_reviewer.review(intent, context, None, fault_injection={"cap_exceeded": "wall_clock"}, heartbeat_callback=record_heartbeat)
-    s_res = sec_reviewer.review(intent, context, fault_injection={"cap_exceeded": "wall_clock"}, heartbeat_callback=record_heartbeat)
-    l_res = legal_reviewer.review(intent, context, fault_injection={"cap_exceeded": "wall_clock"}, heartbeat_callback=record_heartbeat)
+    f_res = finance_reviewer.review(
+        intent,
+        context,
+        None,
+        fault_injection={"cap_exceeded": "wall_clock"},
+        heartbeat_callback=record_heartbeat,
+    )
+    s_res = sec_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "wall_clock"},
+        heartbeat_callback=record_heartbeat,
+    )
+    l_res = legal_reviewer.review(
+        intent,
+        context,
+        fault_injection={"cap_exceeded": "wall_clock"},
+        heartbeat_callback=record_heartbeat,
+    )
 
     assert f_res.verdict == "needs_human"
     assert s_res.verdict == "needs_human"
@@ -555,9 +608,10 @@ def test_agent_cap_wall_clock_fails_closed() -> None:
 # 7. Discrepancy Analyzer & Monotonic Degradation Fuzz Tests
 # =============================================================================
 
+
 def test_discrepancy_analyzer_monotonic_fuzz() -> None:
     """Fuzz test proving DiscrepancyAnalyzer confidence scores and verdicts degrade monotonically.
-    
+
     Text read by discrepancy_analyzer:
       1. Contract Text: MSA / executed terms (indemnity, liability cap, payment Net terms, renewal).
       2. SOW Quote Text: Vendor Statement of Work / price quote (fee schedule, deliverables, SLA).
@@ -569,11 +623,17 @@ def test_discrepancy_analyzer_monotonic_fuzz() -> None:
     analyzer = DiscrepancyAnalyzer(heartbeat_callback=lambda d: heartbeats.append(d))
 
     contract_text = "Master Services Agreement. Payment terms: Net 30. Vendor liability capped at 1x annual fee. Auto-renewal with 60-day notice."
-    sow_text_aligned = "Statement of Work #1. Payment terms: Net 30. Fixed fee: $20,000. Term: 12 months."
-    intent_text = "Procurement request for security tooling, estimated spend $20,000, department Engineering."
+    sow_text_aligned = (
+        "Statement of Work #1. Payment terms: Net 30. Fixed fee: $20,000. Term: 12 months."
+    )
+    intent_text = (
+        "Procurement request for security tooling, estimated spend $20,000, department Engineering."
+    )
 
     # Baseline: 0 discrepancies -> perfect confidence 1.0, approve
-    base_res = analyzer.analyze(contract_text, sow_text_aligned, intent_text, stated_spend=Decimal("20000.00"))
+    base_res = analyzer.analyze(
+        contract_text, sow_text_aligned, intent_text, stated_spend=Decimal("20000.00")
+    )
     assert base_res.confidence_score == 1.0
     assert base_res.verdict == "approve"
     assert len(base_res.discrepancies) == 0
@@ -591,17 +651,23 @@ def test_discrepancy_analyzer_monotonic_fuzz() -> None:
             fault_injection={"injected_discrepancy_count": count},
         )
         # Property 1: Confidence score must strictly not increase (monotonically non-increasing)
-        assert res.confidence_score <= prev_score, f"Monotonicity violation at count={count}: {res.confidence_score} > {prev_score}"
-        
+        assert res.confidence_score <= prev_score, (
+            f"Monotonicity violation at count={count}: {res.confidence_score} > {prev_score}"
+        )
+
         # Property 2: Verdict cannot upgrade from 'needs_human' back to 'approve'
         if prev_verdict == "needs_human":
-            assert res.verdict == "needs_human", f"Verdict upgrade violation at count={count}: was {prev_verdict}, became {res.verdict}"
+            assert res.verdict == "needs_human", (
+                f"Verdict upgrade violation at count={count}: was {prev_verdict}, became {res.verdict}"
+            )
 
         prev_score = res.confidence_score
         prev_verdict = res.verdict
 
-    print(f"\n[DISCREPANCY ANALYZER MONOTONIC FUZZ EVIDENCE]")
-    print(f"  Fuzzed 0..5 discrepancies: confidence degraded from 1.00 down to {prev_score:.2f}, verdict degraded cleanly to {prev_verdict}")
+    print("\n[DISCREPANCY ANALYZER MONOTONIC FUZZ EVIDENCE]")
+    print(
+        f"  Fuzzed 0..5 discrepancies: confidence degraded from 1.00 down to {prev_score:.2f}, verdict degraded cleanly to {prev_verdict}"
+    )
 
 
 def test_explainer_quote_hallucinated_dos_preserves_verdict_and_discards_explanation() -> None:
@@ -628,7 +694,9 @@ def test_explainer_quote_hallucinated_dos_preserves_verdict_and_discards_explana
         reasons=["Deterministic rule verification passed"],
         evidence_ids=["cite_soc2_truth"],
         explanation="Vendor is fully compliant with infinite zero trust and ISO9000.",
-        explainer_citations=["cite_nonexistent_hallucinated_by_llm"],  # Hallucinated explainer citation
+        explainer_citations=[
+            "cite_nonexistent_hallucinated_by_llm"
+        ],  # Hallucinated explainer citation
     )
     verified = CitationVerifier.verify_verdict(verdict, context)
 
@@ -637,5 +705,3 @@ def test_explainer_quote_hallucinated_dos_preserves_verdict_and_discards_explana
     assert verified.explanation_discarded is True
     assert verified.explanation is None
     assert any("Explainer citation verification failed" in r for r in verified.reasons)
-
-

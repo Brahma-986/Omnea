@@ -6,8 +6,8 @@ Create Date: 2026-11-13 13:00:00.000000
 
 """
 
-from collections.abc import Sequence
 import os
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
@@ -551,7 +551,9 @@ def upgrade() -> None:
     # Configure app role procure_app with explicit least-privilege table grants
     procure_pass = os.getenv("PROCURE_APP_PASSWORD")
     if not procure_pass:
-        raise ValueError("Environment variable PROCURE_APP_PASSWORD must be explicitly set; no default permitted")
+        raise ValueError(
+            "Environment variable PROCURE_APP_PASSWORD must be explicitly set; no default permitted"
+        )
     procure_pass = procure_pass.replace("'", "''")
     op.execute(
         f"""

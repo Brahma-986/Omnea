@@ -1,7 +1,8 @@
 """Apply least privilege grant fixes for procure_ingest, procure_reviewer, procure_admin, and procure_workflow."""
 
-import os
 import asyncio
+import os
+
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -27,24 +28,20 @@ async def main() -> None:
         f"ALTER ROLE procure_workflow WITH PASSWORD '{wf_pass}';",
         f"ALTER ROLE procure_reviewer WITH PASSWORD '{rev_pass}';",
         f"ALTER ROLE procure_ingest WITH PASSWORD '{ingest_pass}';",
-
         # 2. Drop procure_app role cleanly
         "DO $$ BEGIN IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_app') THEN "
         "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM procure_app; "
         "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM procure_app; "
         "DROP ROLE procure_app; "
         "END IF; END $$;",
-
         # 3. Fix procure_ingest grants: vendors, aliases, embeddings, spend_transactions, requests.vendor_id
         "GRANT SELECT, INSERT, UPDATE ON vendors, vendor_aliases, vendor_embeddings, spend_transactions TO procure_ingest;",
         "GRANT SELECT, INSERT, UPDATE ON requests, procurement_intents, conversation_sessions, approvals, intent_vendor_resolutions, entity_review_tasks, neo4j_outbox TO procure_ingest;",
         "GRANT SELECT, INSERT ON resolution_decisions, audit_log TO procure_ingest;",
         "GRANT SELECT, INSERT, UPDATE, DELETE ON inbound_event_queue TO procure_ingest;",
         "GRANT UPDATE (vendor_id) ON requests TO procure_ingest;",
-
         # 4. Drop reviewer read on internal queue/session/outbox tables
         "REVOKE SELECT ON inbound_event_queue, conversation_sessions, neo4j_outbox FROM procure_reviewer;",
-
         # 5. Revoke UPDATE, DELETE, TRUNCATE on audit_log from procure_admin
         "REVOKE UPDATE, DELETE, TRUNCATE ON audit_log FROM procure_admin;",
         "REVOKE UPDATE, DELETE, TRUNCATE ON approval_audit_records FROM procure_admin;",

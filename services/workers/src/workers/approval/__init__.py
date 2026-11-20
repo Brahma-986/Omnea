@@ -1,6 +1,10 @@
 """Approval engine package."""
 
-from workers.approval.models import ApprovalWorkflowInput, HumanDecisionSignal, WorkflowExecutionResult
+from workers.approval.models import (
+    ApprovalWorkflowInput,
+    HumanDecisionSignal,
+    WorkflowExecutionResult,
+)
 from workers.approval.workflows import (
     FinanceReviewChildWorkflow,
     LegalReviewChildWorkflow,

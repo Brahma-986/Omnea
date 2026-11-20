@@ -1,5 +1,9 @@
 """Global pytest fixtures."""
 
+import os
+
+os.environ["APP_ENV"] = "test"
+
 from collections.abc import AsyncGenerator
 
 import pytest
@@ -15,8 +19,6 @@ import procure_core.db as core_db
 from api.main import app
 from procure_core.config import Settings
 
-
-import os
 
 @pytest.fixture
 def test_settings() -> Settings:

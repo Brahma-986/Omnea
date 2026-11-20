@@ -42,6 +42,9 @@ def verify_evidence_quotes(
             continue
 
         quote = fields.evidence.get(field_name, "").strip()
+        if not quote and str(val).strip().lower() in normalized_source:
+            quote = str(val).strip()
+
         # Verify quote exists as a verbatim substring in source_text
         if quote and quote.lower() in normalized_source:
             verified_evidence[field_name] = quote
@@ -75,6 +78,11 @@ class IntakeExtractor:
     def __init__(self, llm_client: LLMClientProtocol | None = None) -> None:
         self.llm = llm_client or ResilientLLMClient()
         self.system_prompt = load_intent_prompt()
+
+    @property
+    def last_response_id(self) -> str | None:
+        """Expose the LLM provider response ID from the underlying client."""
+        return getattr(self.llm, "last_response_id", None)
 
     async def extract(
         self,

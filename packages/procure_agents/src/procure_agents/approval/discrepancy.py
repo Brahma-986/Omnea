@@ -13,9 +13,10 @@ and the recommendation monotonically degrades towards 'needs_human' / 'reject', 
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -61,12 +62,14 @@ class DiscrepancyAnalyzer:
         if faults.get("cap_exceeded") == "max_steps":
             current_step = max_steps + 1
             if self.heartbeat_callback:
-                self.heartbeat_callback({
-                    "step": current_step,
-                    "limit": max_steps,
-                    "cap": "max_steps",
-                    "status": "breached",
-                })
+                self.heartbeat_callback(
+                    {
+                        "step": current_step,
+                        "limit": max_steps,
+                        "cap": "max_steps",
+                        "status": "breached",
+                    }
+                )
             return DiscrepancyAnalysisResult(
                 confidence_score=0.0,
                 verdict="needs_human",
@@ -80,12 +83,14 @@ class DiscrepancyAnalyzer:
         if faults.get("cap_exceeded") == "max_tokens":
             observed_tokens = max_tokens + 50
             if self.heartbeat_callback:
-                self.heartbeat_callback({
-                    "tokens": observed_tokens,
-                    "limit": max_tokens,
-                    "cap": "max_tokens",
-                    "status": "breached",
-                })
+                self.heartbeat_callback(
+                    {
+                        "tokens": observed_tokens,
+                        "limit": max_tokens,
+                        "cap": "max_tokens",
+                        "status": "breached",
+                    }
+                )
             return DiscrepancyAnalysisResult(
                 confidence_score=0.0,
                 verdict="needs_human",
@@ -99,12 +104,14 @@ class DiscrepancyAnalyzer:
         if faults.get("cap_exceeded") == "wall_clock":
             observed_sec = wall_clock_limit_sec + 2.5
             if self.heartbeat_callback:
-                self.heartbeat_callback({
-                    "wall_clock_sec": observed_sec,
-                    "limit": wall_clock_limit_sec,
-                    "cap": "wall_clock",
-                    "status": "breached",
-                })
+                self.heartbeat_callback(
+                    {
+                        "wall_clock_sec": observed_sec,
+                        "limit": wall_clock_limit_sec,
+                        "cap": "wall_clock",
+                        "status": "breached",
+                    }
+                )
             return DiscrepancyAnalysisResult(
                 confidence_score=0.0,
                 verdict="needs_human",
@@ -124,7 +131,7 @@ class DiscrepancyAnalyzer:
 
         c_lower = contract_text.lower()
         s_lower = sow_quote_text.lower()
-        i_lower = intent_text.lower()
+        _i_lower = intent_text.lower()
 
         # Check A: Liability Clause Discrepancy
         if "uncapped liability" in s_lower and "liability capped" in c_lower:
@@ -170,7 +177,9 @@ class DiscrepancyAnalyzer:
         # Check D: Spend / Fee Discrepancy
         if stated_spend is not None:
             # Look for dollar amounts in SOW
-            sow_amounts = [Decimal(m) for m in re.findall(r"\$\s*(\d+(?:\.\d{2})?)", sow_quote_text)]
+            sow_amounts = [
+                Decimal(m) for m in re.findall(r"\$\s*(\d+(?:\.\d{2})?)", sow_quote_text)
+            ]
             if sow_amounts:
                 max_sow = max(sow_amounts)
                 if max_sow > stated_spend:
@@ -186,7 +195,7 @@ class DiscrepancyAnalyzer:
                             intent_claim=str(stated_spend),
                         )
                     )
-                    score -= (0.35 if pct > 10 else 0.20)
+                    score -= 0.35 if pct > 10 else 0.20
 
         # Check E: Injected Fault Discrepancies
         if "injected_discrepancy_count" in faults:

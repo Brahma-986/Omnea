@@ -12,13 +12,13 @@ Defines the 7 standard enterprise visibility attributes for Procurement Workflow
 
 from __future__ import annotations
 
-from typing import Any
 from temporalio.api.enums.v1 import IndexedValueType
 from temporalio.api.operatorservice.v1 import (
     AddSearchAttributesRequest,
     ListSearchAttributesRequest,
 )
 from temporalio.client import Client
+
 from procure_core.log_config import get_logger
 
 logger = get_logger(__name__)
@@ -65,11 +65,17 @@ async def preflight_check_search_attributes(
                         search_attributes=missing,
                     )
                 )
-                logger.info("Successfully registered missing search attributes via OperatorService.")
+                logger.info(
+                    "Successfully registered missing search attributes via OperatorService."
+                )
             except Exception as e:
                 logger.error(f"Failed to auto-register search attributes: {e}")
-                raise RuntimeError(f"Missing required search attributes on Temporal server: {list(missing.keys())}") from e
+                raise RuntimeError(
+                    f"Missing required search attributes on Temporal server: {list(missing.keys())}"
+                ) from e
         else:
-            raise RuntimeError(f"Missing required search attributes on Temporal server: {list(missing.keys())}")
+            raise RuntimeError(
+                f"Missing required search attributes on Temporal server: {list(missing.keys())}"
+            )
 
     return {k: str(v) for k, v in REQUIRED_SEARCH_ATTRIBUTES.items()}

@@ -1,7 +1,9 @@
 import asyncio
+
 from temporalio import workflow
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Worker
+
 
 @workflow.defn
 class SimpleWF:
@@ -16,6 +18,7 @@ class SimpleWF:
     @workflow.signal
     def my_signal(self) -> None:
         self.signal_received = True
+
 
 async def main():
     async with await WorkflowEnvironment.start_local() as env:
@@ -35,6 +38,7 @@ async def main():
             print("Signal sent", flush=True)
             res = await handle.result()
             print("Result:", res, flush=True)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

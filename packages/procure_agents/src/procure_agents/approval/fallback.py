@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any
-from uuid import UUID
-
-from procure_agents.approval.models import ReviewerVerdict
+from datetime import datetime
 
 
 class AuthorizationRefusedError(Exception):
@@ -43,7 +39,9 @@ def resolve_approver_with_fallback(
         (assigned_approver_id, resolution_reason)
     """
     if as_of is None:
-        raise ValueError("as_of snapshot timestamp is required; wall-clock datetime.now() is prohibited")
+        raise ValueError(
+            "as_of snapshot timestamp is required; wall-clock datetime.now() is prohibited"
+        )
 
     # 1. Primary check
     if primary_id != requester_id:
@@ -109,4 +107,3 @@ def can_resubmit(
 ) -> bool:
     """Only the original requester or an authorized tenant admin can resubmit an expired request."""
     return actor_id == requester_id or is_admin
-

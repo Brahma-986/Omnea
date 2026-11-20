@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+
 import pytest
 from sqlalchemy import text
 
@@ -24,7 +25,9 @@ async def test_audit_activity_idempotency_prevents_duplicate_insert() -> None:
     async with session_factory() as session:
         async with session.begin():
             await session.execute(
-                text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'alice', 'draft')"),
+                text(
+                    "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'alice', 'draft')"
+                ),
                 {"id": req_id, "t": tenant_id},
             )
 

@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Any
 
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
     ApprovalPolicyRules,
     BudgetSnapshot,
     ProcurementIntentSummary,
-    ReviewerVerdict,
 )
 
 
@@ -38,15 +36,13 @@ class ApprovalPolicyEngine:
         """Check if request spend exceeds autonomous agent ceiling."""
         return intent.estimated_spend > self.rules.agent_autonomous_cap
 
-    def evaluate_high_risk_tags(
-        self, intent: ProcurementIntentSummary
-    ) -> list[str]:
+    def evaluate_high_risk_tags(self, intent: ProcurementIntentSummary) -> list[str]:
         """Return list of high-risk tags present on intent."""
         return [t for t in intent.tags if t in self.rules.high_risk_tags]
 
     def evaluate_fast_track(
         self,
-        intent: ProcurementIntentSummary,
+        _intent: ProcurementIntentSummary,
         context: ApprovalContextSnapshot,
         consecutive_fast_tracks: int = 0,
     ) -> tuple[bool, str]:

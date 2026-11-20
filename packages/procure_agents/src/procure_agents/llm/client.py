@@ -4,27 +4,45 @@ import asyncio
 import json
 import random
 import time
+from dataclasses import dataclass
 from typing import Any, Protocol, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from procure_agents.llm.spend_cap import (
+    LLMSpendTracker,
+    get_llm_spend_tracker,
+)
+from procure_core.config import Settings, get_settings
+from procure_core.log_config import get_logger, tenant_id_ctx
+
+litellm: Any = None
 try:
     import litellm
 
     # Disable litellm default telemetry and verbose logging
     litellm.telemetry = False
 except ImportError:
-    litellm = None
-
-from procure_core.config import Settings, get_settings
-from procure_core.log_config import get_logger
+    pass
 
 logger = get_logger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 
+@dataclass
+class LLMTextResponse:
+    """Plain-text completion response from LLM."""
+
+    content: str
+    response_id: str
+    model: str
+    latency_ms: float
+
+
 class LLMClientProtocol(Protocol):
     """Protocol defining structured LLM invocation contract."""
+
+    last_response_id: str | None = None
 
     async def call_structured(
         self,
@@ -38,7 +56,7 @@ class LLMClientProtocol(Protocol):
 
 
 class ResilientLLMClient:
-    """LiteLLM client enforcing token caps, timeouts, rate-limit retries, and privacy logging."""
+    """LiteLLM client enforcing token caps, timeouts, rate-limit retries, spend caps, and privacy logging."""
 
     def __init__(self, settings: Settings | None = None) -> None:
         self.settings = settings or get_settings()
@@ -46,6 +64,8 @@ class ResilientLLMClient:
         self.max_tokens = self.settings.LLM_MAX_TOKENS
         self.timeout = self.settings.LLM_TIMEOUT_SECONDS
         self.max_retries = self.settings.LLM_MAX_RETRIES
+        self.last_response_id: str | None = None
+        self.spend_tracker = get_llm_spend_tracker(self.settings)
 
     async def call_structured(
         self,
@@ -57,6 +77,10 @@ class ResilientLLMClient:
         """Invoke LLM with schema tool binding and retry on transient faults."""
         if litellm is None:
             raise RuntimeError("litellm is required for ResilientLLMClient but is not installed.")
+
+        # Hard guard: Check tenant and global daily LLM spend budget caps before execution
+        active_tenant = tenant_id_ctx.get()
+        self.spend_tracker.check_budget(active_tenant)
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -79,6 +103,12 @@ class ResilientLLMClient:
             attempts += 1
             call_start = time.perf_counter()
             try:
+                effective_temp = temperature
+                if effective_temp == 0.0 and (
+                    "gemini-3" in self.model or "gemini-2.5" in self.model
+                ):
+                    effective_temp = 1.0
+
                 # Execute LiteLLM completion
                 kwargs: dict[str, Any] = {
                     "model": self.model,
@@ -90,7 +120,7 @@ class ResilientLLMClient:
                     },
                     "max_tokens": self.max_tokens,
                     "timeout": self.timeout,
-                    "temperature": temperature,
+                    "temperature": effective_temp,
                 }
                 if self.settings.LLM_API_KEY:
                     kwargs["api_key"] = self.settings.LLM_API_KEY
@@ -98,12 +128,20 @@ class ResilientLLMClient:
                     kwargs["api_base"] = self.settings.LLM_API_BASE
 
                 response = await litellm.acompletion(**kwargs)
+                self.last_response_id = (
+                    getattr(response, "id", None)
+                    or getattr(response, "response_id", None)
+                    or f"litellm-{int(time.time() * 1000)}"
+                )
                 latency_ms = round((time.perf_counter() - call_start) * 1000, 2)
 
                 usage = getattr(response, "usage", None)
                 prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
                 completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
                 cost = litellm.completion_cost(completion_response=response) if response else 0.0
+
+                # Record spend against daily caps
+                self.spend_tracker.record_spend(active_tenant, cost)
 
                 # Privacy-compliant operational logging (NEVER logs user message text!)
                 logger.info(
@@ -177,6 +215,63 @@ class ResilientLLMClient:
                 )
                 await asyncio.sleep(delay)
 
+    async def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "",
+        temperature: float = 0.0,
+        max_tokens: int | None = None,
+    ) -> LLMTextResponse:
+        """Execute unstructured text completion with retries and spend cap checks."""
+        if litellm is None:
+            raise RuntimeError("litellm is required for ResilientLLMClient but is not installed.")
+
+        # Hard guard: Check tenant and global daily LLM spend budget caps before execution
+        active_tenant = tenant_id_ctx.get()
+        self.spend_tracker.check_budget(active_tenant)
+
+        messages: list[dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        effective_temp = temperature
+        if effective_temp == 0.0 and ("gemini-3" in self.model or "gemini-2.5" in self.model):
+            effective_temp = 1.0
+
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "messages": messages,
+            "max_tokens": max_tokens or self.max_tokens,
+            "timeout": self.timeout,
+            "temperature": effective_temp,
+        }
+        if self.settings.LLM_API_KEY:
+            kwargs["api_key"] = self.settings.LLM_API_KEY
+        if self.settings.LLM_API_BASE:
+            kwargs["api_base"] = self.settings.LLM_API_BASE
+
+        call_start = time.perf_counter()
+        response = await litellm.acompletion(**kwargs)
+        latency_ms = round((time.perf_counter() - call_start) * 1000, 2)
+        resp_id = (
+            getattr(response, "id", None)
+            or getattr(response, "response_id", None)
+            or f"litellm-{int(time.time() * 1000)}"
+        )
+        self.last_response_id = resp_id
+
+        cost = litellm.completion_cost(completion_response=response) if response else 0.0
+        self.spend_tracker.record_spend(active_tenant, cost)
+
+        content = response.choices[0].message.content or ""
+        return LLMTextResponse(
+            content=content,
+            response_id=resp_id,
+            model=self.model,
+            latency_ms=latency_ms,
+        )
+
 
 class FakeLLMClient:
     """Mock LLM client for deterministic unit testing without external network calls."""
@@ -185,10 +280,15 @@ class FakeLLMClient:
         self,
         canned_responses: dict[str, BaseModel] | None = None,
         default_response: BaseModel | None = None,
+        spend_tracker: LLMSpendTracker | None = None,
+        cost_per_call: float = 0.0,
     ) -> None:
         self.canned_responses = canned_responses or {}
         self.default_response = default_response
         self.call_history: list[dict[str, Any]] = []
+        self.last_response_id: str | None = "fake-resp-id"
+        self.spend_tracker = spend_tracker
+        self.cost_per_call = cost_per_call
 
     def set_canned(self, key: str, response: BaseModel) -> None:
         """Register a canned response for a substring key."""
@@ -201,6 +301,13 @@ class FakeLLMClient:
         response_model: type[T],
         temperature: float = 0.0,
     ) -> T:
+        active_tenant = tenant_id_ctx.get()
+        if self.spend_tracker:
+            est = self.cost_per_call if self.cost_per_call > 0 else 0.001
+            self.spend_tracker.check_budget(active_tenant, estimated_cost=est)
+            if self.cost_per_call > 0:
+                self.spend_tracker.record_spend(active_tenant, self.cost_per_call)
+
         self.call_history.append(
             {
                 "system_prompt": system_prompt,
@@ -228,3 +335,26 @@ class FakeLLMClient:
 
         # Construct minimal valid instance
         return response_model.model_validate({})
+
+    async def generate(
+        self,
+        prompt: str,
+        system_prompt: str = "",
+        _temperature: float = 0.0,
+        _max_tokens: int | None = None,
+    ) -> LLMTextResponse:
+        """Mock text generation."""
+        active_tenant = tenant_id_ctx.get()
+        if self.spend_tracker:
+            est = self.cost_per_call if self.cost_per_call > 0 else 0.001
+            self.spend_tracker.check_budget(active_tenant, estimated_cost=est)
+            if self.cost_per_call > 0:
+                self.spend_tracker.record_spend(active_tenant, self.cost_per_call)
+
+        self.call_history.append({"prompt": prompt, "system_prompt": system_prompt})
+        return LLMTextResponse(
+            content="{}",
+            response_id="fake-resp-id",
+            model="fake-model",
+            latency_ms=10.0,
+        )

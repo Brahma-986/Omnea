@@ -5,6 +5,7 @@ import hmac
 import json
 import time
 import uuid
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -17,7 +18,7 @@ from workers.approval.activities import _MOCK_SLACK_MESSAGES
 def make_slack_headers(body: bytes, secret: str, timestamp_offset: int = 0) -> dict[str, str]:
     """Generate Slack HMAC-SHA256 headers with optional timestamp offset."""
     ts = str(int(time.time()) + timestamp_offset)
-    sig_basestring = f"v0:{ts}:{body.decode('utf-8')}".encode("utf-8")
+    sig_basestring = f"v0:{ts}:{body.decode('utf-8')}".encode()
     sig = "v0=" + hmac.new(secret.encode("utf-8"), sig_basestring, hashlib.sha256).hexdigest()
     return {
         "X-Slack-Request-Timestamp": ts,
@@ -37,7 +38,9 @@ async def test_slack_interactive_bad_signature_returns_401(test_settings: Settin
             "Content-Type": "application/json",
         }
         res = await client.post("/api/v1/slack/interactive", content=body, headers=headers)
-        assert res.status_code == 401, f"Expected 401 for bad signature, got {res.status_code}: {res.text}"
+        assert res.status_code == 401, (
+            f"Expected 401 for bad signature, got {res.status_code}: {res.text}"
+        )
 
 
 @pytest.mark.asyncio
@@ -47,11 +50,15 @@ async def test_slack_interactive_replayed_timestamp_returns_401(test_settings: S
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         body = b'{"type": "block_actions"}'
         # Timestamp 305 seconds in the past
-        headers = make_slack_headers(body, test_settings.SLACK_SIGNING_SECRET, timestamp_offset=-305)
+        headers = make_slack_headers(
+            body, test_settings.SLACK_SIGNING_SECRET, timestamp_offset=-305
+        )
         headers["Content-Type"] = "application/json"
 
         res = await client.post("/api/v1/slack/interactive", content=body, headers=headers)
-        assert res.status_code == 401, f"Expected 401 for timestamp >300s, got {res.status_code}: {res.text}"
+        assert res.status_code == 401, (
+            f"Expected 401 for timestamp >300s, got {res.status_code}: {res.text}"
+        )
 
 
 @pytest.mark.asyncio
@@ -65,7 +72,9 @@ async def test_slack_interactive_tampered_body_returns_401(test_settings: Settin
         headers["Content-Type"] = "application/json"
 
         res = await client.post("/api/v1/slack/interactive", content=tampered_body, headers=headers)
-        assert res.status_code == 401, f"Expected 401 for tampered body, got {res.status_code}: {res.text}"
+        assert res.status_code == 401, (
+            f"Expected 401 for tampered body, got {res.status_code}: {res.text}"
+        )
 
 
 @pytest.mark.asyncio
@@ -113,14 +122,16 @@ async def test_slack_interactive_duplicate_button_click_already_decided(
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": "alice@omnea.internal",
-                    "assigned_approver_id": "U_FINANCE_LEAD",
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": "alice@omnea.internal",
+                        "assigned_approver_id": "U_FINANCE_LEAD",
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -147,10 +158,14 @@ async def test_slack_interactive_duplicate_button_click_already_decided(
     # Assert 0 state changes in DB (no audit records, no step status changes)
     async with session_factory() as session:
         audit_count = await session.scalar(
-            text("SELECT count(*) FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id"),
+            text(
+                "SELECT count(*) FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id"
+            ),
             {"t": tenant_id, "id": req_id},
         )
-        assert audit_count == 0, f"Expected 0 audit records on already-decided duplicate click, got {audit_count}"
+        assert audit_count == 0, (
+            f"Expected 0 audit records on already-decided duplicate click, got {audit_count}"
+        )
 
         req_status = await session.scalar(
             text("SELECT status FROM requests WHERE tenant_id = :t AND id = :id"),
@@ -190,7 +205,12 @@ async def test_slack_interactive_message_update_chat_update_instead_of_repost(
                     "INSERT INTO approval_steps (id, tenant_id, request_id, step_name, reviewer_type, round, status, slack_message_ts) "
                     "VALUES (:id, :tenant_id, :req_id, 'finance_review', 'human', 1, 'awaiting_human', :slack_ts)"
                 ),
-                {"id": uuid.uuid4(), "tenant_id": tenant_id, "req_id": req_id, "slack_ts": slack_ts},
+                {
+                    "id": uuid.uuid4(),
+                    "tenant_id": tenant_id,
+                    "req_id": req_id,
+                    "slack_ts": slack_ts,
+                },
             )
 
     # Pre-seed mock message store with original Slack notification
@@ -208,15 +228,17 @@ async def test_slack_interactive_message_update_chat_update_instead_of_repost(
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": "alice@omnea.internal",
-                    "assigned_approver_id": "U_AUTHORIZED_VP",
-                    "step_name": "finance_review",
-                    "round": 1,
-                    "comment": "Looks good, approved",
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": "alice@omnea.internal",
+                        "assigned_approver_id": "U_AUTHORIZED_VP",
+                        "step_name": "finance_review",
+                        "round": 1,
+                        "comment": "Looks good, approved",
+                    }
+                ),
             }
         ],
     }
@@ -237,6 +259,8 @@ async def test_slack_interactive_message_update_chat_update_instead_of_repost(
 
     # Verify underlying Slack message was updated in-place (chat.update) rather than appending new message
     stored = _MOCK_SLACK_MESSAGES[msg_key]
-    assert stored["updated"] is True, "Expected mock Slack message to be marked updated=True via chat.update"
+    assert stored["updated"] is True, (
+        "Expected mock Slack message to be marked updated=True via chat.update"
+    )
     assert "APPROVE" in stored["text"]
     assert stored["ts"] == slack_ts, "Slack timestamp must remain identical for in-place update"

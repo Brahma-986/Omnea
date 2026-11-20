@@ -7,7 +7,7 @@ import hmac
 import json
 import time
 import uuid
-from decimal import Decimal
+
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
@@ -19,15 +19,19 @@ from procure_core.db import get_async_session_factory
 
 def _generate_slack_signature(body: bytes, timestamp: int, secret: str) -> str:
     """Generate Slack v0 HMAC-SHA256 signature."""
-    sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}".encode("utf-8")
+    sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}".encode()
     hex_hash = hmac.new(secret.encode("utf-8"), sig_basestring, hashlib.sha256).hexdigest()
     return f"v0={hex_hash}"
 
 
-async def _seed_request_with_status(session, req_id: uuid.UUID, tenant_id: str, requester_id: str, target_status: str) -> None:
+async def _seed_request_with_status(
+    session, req_id: uuid.UUID, tenant_id: str, requester_id: str, target_status: str
+) -> None:
     """Seed request following the strict state machine transition path from draft."""
     await session.execute(
-        text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, :req, 'draft')"),
+        text(
+            "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, :req, 'draft')"
+        ),
         {"id": req_id, "t": tenant_id, "req": requester_id},
     )
     if target_status == "draft":
@@ -104,7 +108,9 @@ async def test_slack_route_unauthorized_self_approval_returns_403_and_audits_ref
     # Seed parent request in DB following state machine
     async with session_factory() as session:
         async with session.begin():
-            await _seed_request_with_status(session, req_id, tenant_id, requester_id, "awaiting_human")
+            await _seed_request_with_status(
+                session, req_id, tenant_id, requester_id, "awaiting_human"
+            )
 
     payload = {
         "user": {"id": requester_id},
@@ -112,14 +118,16 @@ async def test_slack_route_unauthorized_self_approval_returns_403_and_audits_ref
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": requester_id,
-                    "assigned_approver_id": "bob_vp@omnea.internal",
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": requester_id,
+                        "assigned_approver_id": "bob_vp@omnea.internal",
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -145,18 +153,25 @@ async def test_slack_route_unauthorized_self_approval_returns_403_and_audits_ref
 
     # Verify audit record in PostgreSQL
     async with session_factory() as session:
-        audit_row = (await session.execute(
-            text(
-                "SELECT actor_id, action, idempotency_key, reasons "
-                "FROM approval_audit_records "
-                "WHERE tenant_id = :t AND request_id = :id AND action = 'authorization_refused'"
-            ),
-            {"t": tenant_id, "id": req_id},
-        )).mappings().one()
+        audit_row = (
+            (
+                await session.execute(
+                    text(
+                        "SELECT actor_id, action, idempotency_key, reasons "
+                        "FROM approval_audit_records "
+                        "WHERE tenant_id = :t AND request_id = :id AND action = 'authorization_refused'"
+                    ),
+                    {"t": tenant_id, "id": req_id},
+                )
+            )
+            .mappings()
+            .one()
+        )
 
         assert audit_row["actor_id"] == requester_id
         assert audit_row["action"] == "authorization_refused"
         from procure_agents.approval.fallback import format_auth_refused_idempotency_key
+
         expected_key = format_auth_refused_idempotency_key(
             tenant_id, str(req_id), requester_id, "finance_review", "approve", 1
         )
@@ -182,7 +197,9 @@ async def test_slack_route_authorized_approver_returns_200() -> None:
 
     async with session_factory() as session:
         async with session.begin():
-            await _seed_request_with_status(session, req_id, tenant_id, requester_id, "awaiting_human")
+            await _seed_request_with_status(
+                session, req_id, tenant_id, requester_id, "awaiting_human"
+            )
 
     payload = {
         "user": {"id": approver_id},
@@ -190,15 +207,17 @@ async def test_slack_route_authorized_approver_returns_200() -> None:
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": requester_id,
-                    "assigned_approver_id": approver_id,
-                    "step_name": "finance_review",
-                    "round": 1,
-                    "comment": "Budget verified and approved",
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": requester_id,
+                        "assigned_approver_id": approver_id,
+                        "step_name": "finance_review",
+                        "round": 1,
+                        "comment": "Budget verified and approved",
+                    }
+                ),
             }
         ],
     }
@@ -220,7 +239,7 @@ async def test_slack_route_authorized_approver_returns_200() -> None:
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "accepted"
-        assert f"Action 'approve' successfully recorded" in data["message"]
+        assert "Action 'approve' successfully recorded" in data["message"]
         print("\n[SLACK ROUTE AUTHORIZED 200 EVIDENCE]")
         print(f"  Status: {data['status']}, Message: {data['message']}")
 
@@ -248,14 +267,16 @@ async def test_slack_route_already_decided_request_returns_200_no_op() -> None:
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": requester_id,
-                    "assigned_approver_id": approver_id,
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": requester_id,
+                        "assigned_approver_id": approver_id,
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -284,18 +305,24 @@ async def test_slack_route_already_decided_request_returns_200_no_op() -> None:
     # Verify duplicate_signal_ignored audit record created in PostgreSQL
     async with session_factory() as session:
         dup_audit = (
-            await session.execute(
-                text(
-                    "SELECT actor_id, action, idempotency_key, reasons FROM approval_audit_records "
-                    "WHERE tenant_id = :t AND request_id = :id AND action = 'duplicate_signal_ignored'"
-                ),
-                {"t": tenant_id, "id": req_id},
+            (
+                await session.execute(
+                    text(
+                        "SELECT actor_id, action, idempotency_key, reasons FROM approval_audit_records "
+                        "WHERE tenant_id = :t AND request_id = :id AND action = 'duplicate_signal_ignored'"
+                    ),
+                    {"t": tenant_id, "id": req_id},
+                )
             )
-        ).mappings().one()
+            .mappings()
+            .one()
+        )
         assert dup_audit["actor_id"] == approver_id
         assert dup_audit["action"] == "duplicate_signal_ignored"
         assert "Signal ignored because request is already decided" in str(dup_audit["reasons"])
-        print(f"  Verified duplicate_signal_ignored audit row recorded: key={dup_audit['idempotency_key']}")
+        print(
+            f"  Verified duplicate_signal_ignored audit row recorded: key={dup_audit['idempotency_key']}"
+        )
 
 
 @pytest.mark.asyncio
@@ -338,7 +365,9 @@ async def test_slack_route_chat_update_instead_of_repost() -> None:
 
     async with session_factory() as session:
         async with session.begin():
-            await _seed_request_with_status(session, req_id, tenant_id, requester_id, "awaiting_human")
+            await _seed_request_with_status(
+                session, req_id, tenant_id, requester_id, "awaiting_human"
+            )
 
     payload = {
         "user": {"id": approver_id},
@@ -346,14 +375,16 @@ async def test_slack_route_chat_update_instead_of_repost() -> None:
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": tenant_id,
-                    "request_id": str(req_id),
-                    "requester_id": requester_id,
-                    "assigned_approver_id": approver_id,
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": tenant_id,
+                        "request_id": str(req_id),
+                        "requester_id": requester_id,
+                        "assigned_approver_id": approver_id,
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -375,4 +406,6 @@ async def test_slack_route_chat_update_instead_of_repost() -> None:
         data = resp.json()
         assert data.get("replace_original") is True
         print("\n[SLACK ROUTE IN-PLACE UPDATE EVIDENCE]")
-        print(f"  replace_original: {data.get('replace_original')} (Slack API performs chat.update, zero reposts)")
+        print(
+            f"  replace_original: {data.get('replace_original')} (Slack API performs chat.update, zero reposts)"
+        )

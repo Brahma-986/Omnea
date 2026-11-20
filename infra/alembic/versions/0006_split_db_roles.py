@@ -6,8 +6,8 @@ Create Date: 2026-11-13 15:30:00.000000
 
 """
 
-from collections.abc import Sequence
 import os
+from collections.abc import Sequence
 
 from alembic import op
 
@@ -19,10 +19,18 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    admin_pass = os.getenv("PROCURE_ADMIN_PASSWORD") or os.getenv("PROCURE_APP_PASSWORD", "procure_admin_pass")
-    wf_pass = os.getenv("PROCURE_WORKFLOW_PASSWORD") or os.getenv("PROCURE_APP_PASSWORD", "procure_workflow_pass")
-    rev_pass = os.getenv("PROCURE_REVIEWER_PASSWORD") or os.getenv("PROCURE_APP_PASSWORD", "procure_reviewer_pass")
-    ingest_pass = os.getenv("PROCURE_INGEST_PASSWORD") or os.getenv("PROCURE_APP_PASSWORD", "procure_ingest_pass")
+    admin_pass = os.getenv("PROCURE_ADMIN_PASSWORD") or os.getenv(
+        "PROCURE_APP_PASSWORD", "procure_admin_pass"
+    )
+    wf_pass = os.getenv("PROCURE_WORKFLOW_PASSWORD") or os.getenv(
+        "PROCURE_APP_PASSWORD", "procure_workflow_pass"
+    )
+    rev_pass = os.getenv("PROCURE_REVIEWER_PASSWORD") or os.getenv(
+        "PROCURE_APP_PASSWORD", "procure_reviewer_pass"
+    )
+    ingest_pass = os.getenv("PROCURE_INGEST_PASSWORD") or os.getenv(
+        "PROCURE_APP_PASSWORD", "procure_ingest_pass"
+    )
 
     admin_pass = admin_pass.replace("'", "''")
     wf_pass = wf_pass.replace("'", "''")

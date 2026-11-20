@@ -174,7 +174,9 @@ async def test_reservation_commit_once_on_replay(db_session: AsyncSession) -> No
     )
     # Insert parent request
     await db_session.execute(
-        text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"),
+        text(
+            "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"
+        ),
         {"id": req_id, "tenant_id": tenant_id},
     )
     # Acquire active reservation ($2,500)
@@ -191,7 +193,9 @@ async def test_reservation_commit_once_on_replay(db_session: AsyncSession) -> No
 
     # Verify committed spend is $2,500
     committed_amt_1 = await db_session.scalar(
-        text("SELECT committed FROM department_budgets WHERE tenant_id = :tenant_id AND department = :dept"),
+        text(
+            "SELECT committed FROM department_budgets WHERE tenant_id = :tenant_id AND department = :dept"
+        ),
         {"tenant_id": tenant_id, "dept": dept},
     )
     assert committed_amt_1 == Decimal("2500.0000")
@@ -203,7 +207,9 @@ async def test_reservation_commit_once_on_replay(db_session: AsyncSession) -> No
 
     # Invariant: committed spend MUST STILL be $2,500 (NOT $5,000!)
     committed_amt_2 = await db_session.scalar(
-        text("SELECT committed FROM department_budgets WHERE tenant_id = :tenant_id AND department = :dept"),
+        text(
+            "SELECT committed FROM department_budgets WHERE tenant_id = :tenant_id AND department = :dept"
+        ),
         {"tenant_id": tenant_id, "dept": dept},
     )
     assert committed_amt_2 == Decimal("2500.0000")
@@ -226,7 +232,9 @@ async def test_reservation_release_on_t3_expiry(db_session: AsyncSession) -> Non
         {"id": uuid.uuid4(), "tenant_id": tenant_id, "dept": dept, "curr": curr, "period": period},
     )
     await db_session.execute(
-        text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"),
+        text(
+            "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"
+        ),
         {"id": req_id, "tenant_id": tenant_id},
     )
     await db_session.flush()
@@ -244,7 +252,9 @@ async def test_reservation_release_on_t3_expiry(db_session: AsyncSession) -> Non
     await db_session.flush()
 
     status = await db_session.scalar(
-        text("SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"),
+        text(
+            "SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"
+        ),
         {"tenant_id": tenant_id, "req_id": req_id},
     )
     assert status == "released"
@@ -267,7 +277,9 @@ async def test_reservation_release_on_reject(db_session: AsyncSession) -> None:
         {"id": uuid.uuid4(), "tenant_id": tenant_id, "dept": dept, "curr": curr, "period": period},
     )
     await db_session.execute(
-        text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"),
+        text(
+            "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"
+        ),
         {"id": req_id, "tenant_id": tenant_id},
     )
     await db_session.flush()
@@ -285,7 +297,9 @@ async def test_reservation_release_on_reject(db_session: AsyncSession) -> None:
     await db_session.flush()
 
     status = await db_session.scalar(
-        text("SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"),
+        text(
+            "SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"
+        ),
         {"tenant_id": tenant_id, "req_id": req_id},
     )
     assert status == "released"
@@ -308,7 +322,9 @@ async def test_reservation_release_on_new_round(db_session: AsyncSession) -> Non
         {"id": uuid.uuid4(), "tenant_id": tenant_id, "dept": dept, "curr": curr, "period": period},
     )
     await db_session.execute(
-        text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"),
+        text(
+            "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :tenant_id, 'u1', 'draft')"
+        ),
         {"id": req_id, "tenant_id": tenant_id},
     )
     await db_session.flush()
@@ -332,11 +348,15 @@ async def test_reservation_release_on_new_round(db_session: AsyncSession) -> Non
     await db_session.flush()
 
     status_r1 = await db_session.scalar(
-        text("SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"),
+        text(
+            "SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 1"
+        ),
         {"tenant_id": tenant_id, "req_id": req_id},
     )
     status_r2 = await db_session.scalar(
-        text("SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 2"),
+        text(
+            "SELECT status FROM budget_reservations WHERE tenant_id = :tenant_id AND request_id = :req_id AND round = 2"
+        ),
         {"tenant_id": tenant_id, "req_id": req_id},
     )
     assert status_r1 == "released"
@@ -366,20 +386,40 @@ async def test_two_concurrent_requests_nearly_exhausted_budget() -> None:
                 "INSERT INTO department_budgets (id, tenant_id, department, currency, period, amount, committed) "
                 "VALUES (:id, :tenant_id, :dept, :curr, :period, 10000.0, 5000.0)"
             ),
-            {"id": uuid.uuid4(), "tenant_id": tenant_1, "dept": dept, "curr": curr, "period": period},
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_1,
+                "dept": dept,
+                "curr": curr,
+                "period": period,
+            },
         )
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"), {"id": req_a1, "t": tenant_1})
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"), {"id": req_b1, "t": tenant_1})
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"
+            ),
+            {"id": req_a1, "t": tenant_1},
+        )
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"
+            ),
+            {"id": req_b1, "t": tenant_1},
+        )
         await s.commit()
 
     async with session_factory() as s_a:
         async with s_a.begin():
-            ok_a, _ = await reserve_budget_under_lock(s_a, tenant_1, req_a1, 1, dept, curr, period, Decimal("4000.00"), "idem_ord1_a")
+            ok_a, _ = await reserve_budget_under_lock(
+                s_a, tenant_1, req_a1, 1, dept, curr, period, Decimal("4000.00"), "idem_ord1_a"
+            )
             assert ok_a is True
 
     async with session_factory() as s_b:
         async with s_b.begin():
-            ok_b, reason_b = await reserve_budget_under_lock(s_b, tenant_1, req_b1, 1, dept, curr, period, Decimal("3000.00"), "idem_ord1_b")
+            ok_b, reason_b = await reserve_budget_under_lock(
+                s_b, tenant_1, req_b1, 1, dept, curr, period, Decimal("3000.00"), "idem_ord1_b"
+            )
             # 5000 - 4000 = 1000 headroom < 3000 requested -> REJECTED
             assert ok_b is False
             assert "Insufficient headroom" in reason_b
@@ -395,20 +435,40 @@ async def test_two_concurrent_requests_nearly_exhausted_budget() -> None:
                 "INSERT INTO department_budgets (id, tenant_id, department, currency, period, amount, committed) "
                 "VALUES (:id, :tenant_id, :dept, :curr, :period, 10000.0, 5000.0)"
             ),
-            {"id": uuid.uuid4(), "tenant_id": tenant_2, "dept": dept, "curr": curr, "period": period},
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_2,
+                "dept": dept,
+                "curr": curr,
+                "period": period,
+            },
         )
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"), {"id": req_a2, "t": tenant_2})
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"), {"id": req_b2, "t": tenant_2})
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"
+            ),
+            {"id": req_a2, "t": tenant_2},
+        )
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"
+            ),
+            {"id": req_b2, "t": tenant_2},
+        )
         await s.commit()
 
     async with session_factory() as s_b:
         async with s_b.begin():
-            ok_b2, _ = await reserve_budget_under_lock(s_b, tenant_2, req_b2, 1, dept, curr, period, Decimal("3000.00"), "idem_ord2_b")
+            ok_b2, _ = await reserve_budget_under_lock(
+                s_b, tenant_2, req_b2, 1, dept, curr, period, Decimal("3000.00"), "idem_ord2_b"
+            )
             assert ok_b2 is True
 
     async with session_factory() as s_a:
         async with s_a.begin():
-            ok_a2, reason_a2 = await reserve_budget_under_lock(s_a, tenant_2, req_a2, 1, dept, curr, period, Decimal("4000.00"), "idem_ord2_a")
+            ok_a2, reason_a2 = await reserve_budget_under_lock(
+                s_a, tenant_2, req_a2, 1, dept, curr, period, Decimal("4000.00"), "idem_ord2_a"
+            )
             # 5000 - 3000 = 2000 headroom < 4000 requested -> REJECTED
             assert ok_a2 is False
             assert "Insufficient headroom" in reason_a2
@@ -424,10 +484,26 @@ async def test_two_concurrent_requests_nearly_exhausted_budget() -> None:
                 "INSERT INTO department_budgets (id, tenant_id, department, currency, period, amount, committed) "
                 "VALUES (:id, :tenant_id, :dept, :curr, :period, 10000.0, 5000.0)"
             ),
-            {"id": uuid.uuid4(), "tenant_id": tenant_conc, "dept": dept, "curr": curr, "period": period},
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_conc,
+                "dept": dept,
+                "curr": curr,
+                "period": period,
+            },
         )
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"), {"id": req_ac, "t": tenant_conc})
-        await s.execute(text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"), {"id": req_bc, "t": tenant_conc})
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u1', 'draft')"
+            ),
+            {"id": req_ac, "t": tenant_conc},
+        )
+        await s.execute(
+            text(
+                "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'u2', 'draft')"
+            ),
+            {"id": req_bc, "t": tenant_conc},
+        )
         await s.commit()
 
     async def attempt_reservation(req_id: uuid.UUID, amount: Decimal, idem: str) -> bool:

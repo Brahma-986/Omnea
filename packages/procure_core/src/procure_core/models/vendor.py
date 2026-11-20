@@ -13,6 +13,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    ForeignKey,
     ForeignKeyConstraint,
     Identity,
     Index,
@@ -304,8 +305,80 @@ class VendorSecurityReviewModel(Base):
             ondelete="RESTRICT",
         ),
         CheckConstraint(
-            "status IN ('compliant', 'pending_review', 'expired', 'remediation_required')",
+            "status IN ('compliant', 'pending_review', 'expired', 'remediation_required', 'quarantined', 'qualified_opinion', 'superseded')",
             name="chk_security_review_status",
+        ),
+    )
+
+
+class TprmRiskRegisterModel(Base):
+    """Vendor Third-Party Risk Management (TPRM) register."""
+
+    __tablename__ = "tprm_risk_register"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    vendor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    risk_tier: Mapped[str] = mapped_column(String(32), nullable=False, default="medium")
+    overall_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="pending_review"
+    )
+    findings_summary: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    active_risks: Mapped[list[Any]] = mapped_column(JSONB, nullable=False, default=list)
+    next_review_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "vendor_id", name="uq_tprm_risk_register_vendor"),
+        ForeignKeyConstraint(
+            ["tenant_id", "vendor_id"],
+            ["vendors.tenant_id", "vendors.id"],
+            name="fk_tprm_risk_register_vendor",
+            ondelete="CASCADE",
+        ),
+    )
+
+
+class TprmControlFindingModel(Base):
+    """Verified control findings extracted from security review documents."""
+
+    __tablename__ = "tprm_control_findings"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    vendor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    security_review_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("vendor_security_reviews.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    domain: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="not_found")
+    page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    quote: Mapped[str | None] = mapped_column(Text, nullable=True)
+    start_offset: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    end_offset: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    details: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["tenant_id", "vendor_id"],
+            ["vendors.tenant_id", "vendors.id"],
+            name="fk_tprm_findings_vendor",
+            ondelete="CASCADE",
+        ),
+        CheckConstraint(
+            "status IN ('satisfied', 'qualified', 'remediation_required', 'not_found')",
+            name="chk_tprm_finding_status",
         ),
     )
 

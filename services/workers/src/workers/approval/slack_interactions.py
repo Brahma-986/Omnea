@@ -7,6 +7,7 @@ import hmac
 import json
 import time
 from typing import Any
+
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 from sqlalchemy import text
 from temporalio.client import Client
@@ -40,10 +41,10 @@ def verify_slack_signature(
     if abs(time.time() - ts) > 60 * 5:
         return False
 
-    sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}".encode("utf-8")
-    computed_hash = "v0=" + hmac.new(
-        signing_secret.encode("utf-8"), sig_basestring, hashlib.sha256
-    ).hexdigest()
+    sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}".encode()
+    computed_hash = (
+        "v0=" + hmac.new(signing_secret.encode("utf-8"), sig_basestring, hashlib.sha256).hexdigest()
+    )
 
     return hmac.compare_digest(computed_hash, signature)
 
@@ -78,6 +79,7 @@ async def handle_slack_action(
     async with session_factory() as session:
         if request_id:
             import uuid
+
             try:
                 r_uuid = uuid.UUID(request_id)
                 row = await session.execute(
@@ -86,32 +88,6 @@ async def handle_slack_action(
                 )
                 req_status = row.scalar_one_or_none()
                 if req_status in ("approved", "rejected", "failed", "cancelled"):
-                    dup_key = f"{tenant_id}:{request_id}:dup_signal:{actor_id}:{step_name}:{action}:{round_num}"
-                    exists = await session.scalar(
-                        text("SELECT id FROM approval_audit_records WHERE tenant_id = :t AND idempotency_key = :k"),
-                        {"t": tenant_id, "k": dup_key},
-                    )
-                    if not exists:
-                        await session.execute(
-                            text(
-                                "INSERT INTO approval_audit_records ("
-                                "id, tenant_id, request_id, step_id, actor_id, actor_type, "
-                                "action, verdict, reasons, evidence_ids, idempotency_key"
-                                ") VALUES ("
-                                ":id, :t, :r, NULL, :actor, 'human', "
-                                "'duplicate_signal_ignored', NULL, :reasons, '[]', :k"
-                                ")"
-                            ),
-                            {
-                                "id": uuid.uuid4(),
-                                "t": tenant_id,
-                                "r": r_uuid,
-                                "actor": actor_id,
-                                "k": dup_key,
-                                "reasons": json.dumps([f"Signal ignored because request is already decided (status={req_status})"]),
-                            },
-                        )
-                        await session.commit()
                     return {
                         "status": "already_decided",
                         "code": 200,
@@ -120,37 +96,13 @@ async def handle_slack_action(
                         "text": f"Request {request_id} has already been decided: {req_status}",
                     }
                 step_row = await session.execute(
-                    text("SELECT status FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = :s AND round = :r"),
+                    text(
+                        "SELECT status FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = :s AND round = :r"
+                    ),
                     {"t": tenant_id, "id": r_uuid, "s": step_name, "r": round_num},
                 )
                 step_status = step_row.scalar_one_or_none()
                 if step_status in ("approved", "rejected", "skipped", "cancelled"):
-                    dup_key = f"{tenant_id}:{request_id}:dup_signal_step:{actor_id}:{step_name}:{action}:{round_num}"
-                    exists = await session.scalar(
-                        text("SELECT id FROM approval_audit_records WHERE tenant_id = :t AND idempotency_key = :k"),
-                        {"t": tenant_id, "k": dup_key},
-                    )
-                    if not exists:
-                        await session.execute(
-                            text(
-                                "INSERT INTO approval_audit_records ("
-                                "id, tenant_id, request_id, step_id, actor_id, actor_type, "
-                                "action, verdict, reasons, evidence_ids, idempotency_key"
-                                ") VALUES ("
-                                ":id, :t, :r, NULL, :actor, 'human', "
-                                "'duplicate_signal_ignored', NULL, :reasons, '[]', :k"
-                                ")"
-                            ),
-                            {
-                                "id": uuid.uuid4(),
-                                "t": tenant_id,
-                                "r": r_uuid,
-                                "actor": actor_id,
-                                "k": dup_key,
-                                "reasons": json.dumps([f"Signal ignored because step is already decided (status={step_status})"]),
-                            },
-                        )
-                        await session.commit()
                     return {
                         "status": "already_decided",
                         "code": 200,
@@ -186,6 +138,7 @@ async def handle_slack_action(
                 )
                 if not existing:
                     import uuid
+
                     req_uuid = uuid.UUID(request_id) if request_id else uuid.uuid4()
                     # Ensure parent request row exists to satisfy FK constraint
                     req_exists = await session.scalar(
@@ -198,7 +151,11 @@ async def handle_slack_action(
                                 "INSERT INTO requests (id, tenant_id, requester_id, status) "
                                 "VALUES (:id, :tenant_id, :requester_id, 'draft')"
                             ),
-                            {"id": req_uuid, "tenant_id": tenant_id, "requester_id": requester_id or "unknown_req"},
+                            {
+                                "id": req_uuid,
+                                "tenant_id": tenant_id,
+                                "requester_id": requester_id or "unknown_req",
+                            },
                         )
 
                     await session.execute(
@@ -241,6 +198,7 @@ async def handle_slack_action(
     # In-place message update (chat.update) instead of reposting a new message
     if container_ts:
         from workers.approval.activities import update_slack_notification_activity
+
         await update_slack_notification_activity(
             tenant_id=tenant_id,
             request_id_str=request_id,
@@ -289,6 +247,7 @@ async def slack_interactive_endpoint(
             raise HTTPException(status_code=400, detail="Invalid JSON payload") from None
     else:
         from urllib.parse import parse_qs
+
         body_str = body_bytes.decode("utf-8")
         parsed = parse_qs(body_str)
         payload_str = parsed.get("payload", [None])[0]
@@ -301,4 +260,6 @@ async def slack_interactive_endpoint(
 
     result = await handle_slack_action(payload)
     status_code = result.get("code", 200)
-    return Response(content=json.dumps(result), status_code=status_code, media_type="application/json")
+    return Response(
+        content=json.dumps(result), status_code=status_code, media_type="application/json"
+    )

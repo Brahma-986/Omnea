@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import json
 import math
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
+
 import pytest
 
 from procure_agents.approval.models import (
@@ -56,7 +56,9 @@ def evaluate_case(case: dict[str, Any]) -> tuple[str, dict[str, ReviewerVerdict]
     intent = ProcurementIntentSummary.model_validate(case["intent"])
     context = ApprovalContextSnapshot.model_validate(case["context_snapshot"])
     policy = ApprovalPolicyRules.model_validate(case["policy"]["rules"])
-    budget = BudgetSnapshot.model_validate(case["budget_state"]) if case.get("budget_state") else None
+    budget = (
+        BudgetSnapshot.model_validate(case["budget_state"]) if case.get("budget_state") else None
+    )
     faults = case.get("fault_injection", {})
 
     policy_engine = ApprovalPolicyEngine(policy)
@@ -89,7 +91,9 @@ def evaluate_case(case: dict[str, Any]) -> tuple[str, dict[str, ReviewerVerdict]
             # 4th renewal cap breached
             required_reviewers = ["finance", "security", "legal"]
     else:
-        required_reviewers = case.get("expected_required_reviewers", ["finance", "security", "legal"])
+        required_reviewers = case.get(
+            "expected_required_reviewers", ["finance", "security", "legal"]
+        )
 
     # 3. Aggregation logic
     # Hard reject triggers immediate rejection
@@ -145,20 +149,24 @@ def test_golden_eval_91_cases_confusion_and_wilson_bounds() -> None:
         if expected == actual:
             stats["matches"] += 1
 
-        actual_results.append({
-            "case_id": c["case_id"],
-            "category": cat,
-            "expected": expected,
-            "actual": actual,
-            "must_not_auto_approve": c["must_not_auto_approve"],
-            "matches": (expected == actual),
-        })
+        actual_results.append(
+            {
+                "case_id": c["case_id"],
+                "category": cat,
+                "expected": expected,
+                "actual": actual,
+                "must_not_auto_approve": c["must_not_auto_approve"],
+                "matches": (expected == actual),
+            }
+        )
 
     # Print Expected-vs-Actual Confusion Table per Category
     print("\n" + "=" * 95)
     print("PHASE 4 GOLDEN EVALUATION: EXPECTED VS ACTUAL CONFUSION TABLE PER CATEGORY")
     print("=" * 95)
-    print(f"{'Category':<32} {'Total':<6} {'Exp Appr':<9} {'Act Appr':<9} {'Exp Hmn':<8} {'Act Hmn':<8} {'Exp Rej':<8} {'Act Rej':<8} {'Acc %':<6}")
+    print(
+        f"{'Category':<32} {'Total':<6} {'Exp Appr':<9} {'Act Appr':<9} {'Exp Hmn':<8} {'Act Hmn':<8} {'Exp Rej':<8} {'Act Rej':<8} {'Acc %':<6}"
+    )
     print("-" * 95)
 
     total_all = 0
@@ -173,14 +181,22 @@ def test_golden_eval_91_cases_confusion_and_wilson_bounds() -> None:
             f"{s['expected_rejected']:<8} {s['actual_rejected']:<8} {acc:>5.1f}%"
         )
     print("-" * 95)
-    print(f"{'OVERALL TOTALS':<32} {total_all:<6} {'':<9} {'':<9} {'':<8} {'':<8} {'':<8} {'':<8} {(matches_all/total_all)*100.0:>5.1f}%")
+    print(
+        f"{'OVERALL TOTALS':<32} {total_all:<6} {'':<9} {'':<9} {'':<8} {'':<8} {'':<8} {'':<8} {(matches_all / total_all) * 100.0:>5.1f}%"
+    )
     print("=" * 95)
 
     # 1. Auto-approval rate on clear cases (excluding Slack interactive click)
-    clear_autonomous = [r for r in actual_results if r["expected"] == "approved" and r["category"] != "slack_interactivity"]
+    clear_autonomous = [
+        r
+        for r in actual_results
+        if r["expected"] == "approved" and r["category"] != "slack_interactivity"
+    ]
     auto_approvals = sum(1 for r in clear_autonomous if r["actual"] == "approved")
     auto_approval_rate = auto_approvals / len(clear_autonomous)
-    wilson_lower_auto, wilson_upper_auto = wilson_score_interval(auto_approvals, len(clear_autonomous))
+    wilson_lower_auto, wilson_upper_auto = wilson_score_interval(
+        auto_approvals, len(clear_autonomous)
+    )
 
     # Escalation cases (denominator 52, smoke excluded)
     escalations = [r for r in actual_results if r["expected"] == "awaiting_human"]
@@ -199,29 +215,49 @@ def test_golden_eval_91_cases_confusion_and_wilson_bounds() -> None:
     policy_escalations = [r for r in escalations if r["category"] in policy_cats]
     fault_escalations = [r for r in escalations if r["category"] not in policy_cats]
 
-    print(f"\n[ACTUAL SYSTEM PERFORMANCE]")
-    print(f"Autonomous Approvals       : {auto_approvals}/{len(clear_autonomous)} ({auto_approval_rate * 100.0:.2f}%) (Slack interactive click excluded)")
-    print(f"Wilson 95% Confidence Bound: [{wilson_lower_auto * 100.0:.2f}%, {wilson_upper_auto * 100.0:.2f}%]")
+    print("\n[ACTUAL SYSTEM PERFORMANCE]")
+    print(
+        f"Autonomous Approvals       : {auto_approvals}/{len(clear_autonomous)} ({auto_approval_rate * 100.0:.2f}%) (Slack interactive click excluded)"
+    )
+    print(
+        f"Wilson 95% Confidence Bound: [{wilson_lower_auto * 100.0:.2f}%, {wilson_upper_auto * 100.0:.2f}%]"
+    )
     print(f"Escalation Denominator     : {len(escalations)} cases (Smoke excluded)")
-    print(f"  - Policy Escalations     : {len(policy_escalations)} (25 looks_approvable, 4 soft_finding, 2 vp_threshold, 2 self_approval, 2 no_security, 2 stale_security)")
-    print(f"  - Fault / Attack Esc     : {len(fault_escalations)} (6 prompt_inj, 2 hall_evid, 2 hall_quote, 2 outage, 1 stale_refresh_fail, 1 cap_hit, 1 fast_track_cap)")
-    print(f"Escalation Capture Rate    : {escalation_matches}/{len(escalations)} (100.0%) -> Wilson: [{wilson_lower_esc * 100.0:.2f}%, {wilson_upper_esc * 100.0:.2f}%]")
+    print(
+        f"  - Policy Escalations     : {len(policy_escalations)} (25 looks_approvable, 4 soft_finding, 2 vp_threshold, 2 self_approval, 2 no_security, 2 stale_security)"
+    )
+    print(
+        f"  - Fault / Attack Esc     : {len(fault_escalations)} (6 prompt_inj, 2 hall_evid, 2 hall_quote, 2 outage, 1 stale_refresh_fail, 1 cap_hit, 1 fast_track_cap)"
+    )
+    print(
+        f"Escalation Capture Rate    : {escalation_matches}/{len(escalations)} (100.0%) -> Wilson: [{wilson_lower_esc * 100.0:.2f}%, {wilson_upper_esc * 100.0:.2f}%]"
+    )
 
     # 2. False-approval count on must-not-auto-approve cases
     must_not_auto = [r for r in actual_results if r["must_not_auto_approve"]]
     false_approvals = sum(1 for r in must_not_auto if r["actual"] == "approved")
-    wilson_lower_false, wilson_upper_false = wilson_score_interval(false_approvals, len(must_not_auto))
+    wilson_lower_false, wilson_upper_false = wilson_score_interval(
+        false_approvals, len(must_not_auto)
+    )
 
     print(f"False Auto-Approvals       : {false_approvals}/{len(must_not_auto)} (0.00%)")
     print(f"Wilson 95% Upper Bound     : {wilson_upper_false * 100.0:.2f}%")
 
     # Assertions
-    assert len(clear_autonomous) == 33, f"Expected 33 clear autonomous cases, got {len(clear_autonomous)}"
+    assert len(clear_autonomous) == 33, (
+        f"Expected 33 clear autonomous cases, got {len(clear_autonomous)}"
+    )
     assert auto_approvals == 33, f"Expected 33/33 autonomous approvals, got {auto_approvals}"
     assert len(escalations) == 52, f"Expected escalation denominator 52, got {len(escalations)}"
-    assert len(policy_escalations) == 37, f"Expected 37 policy escalations, got {len(policy_escalations)}"
-    assert len(fault_escalations) == 15, f"Expected 15 fault escalations, got {len(fault_escalations)}"
-    assert false_approvals == 0, f"Expected 0 false auto-approvals on escalation/reject cases, got {false_approvals}"
+    assert len(policy_escalations) == 37, (
+        f"Expected 37 policy escalations, got {len(policy_escalations)}"
+    )
+    assert len(fault_escalations) == 15, (
+        f"Expected 15 fault escalations, got {len(fault_escalations)}"
+    )
+    assert false_approvals == 0, (
+        f"Expected 0 false auto-approvals on escalation/reject cases, got {false_approvals}"
+    )
     assert matches_all == 91, f"Expected 91/91 matches, got {matches_all}/91"
 
     # =========================================================================
@@ -234,17 +270,23 @@ def test_golden_eval_91_cases_confusion_and_wilson_bounds() -> None:
     # Always-Approve Stub
     always_appr_false_approvals = sum(1 for r in must_not_auto)  # Predicts 'approved' for all
     w_low_aa, w_up_aa = wilson_score_interval(always_appr_false_approvals, len(must_not_auto))
-    print(f"AlwaysApproveStub False Approvals   : {always_appr_false_approvals}/{len(must_not_auto)} (100.0%) -> Wilson: [{w_low_aa*100:.1f}%, {w_up_aa*100:.1f}%] -> FAILS GATE")
+    print(
+        f"AlwaysApproveStub False Approvals   : {always_appr_false_approvals}/{len(must_not_auto)} (100.0%) -> Wilson: [{w_low_aa * 100:.1f}%, {w_up_aa * 100:.1f}%] -> FAILS GATE"
+    )
 
     # Always-Needs-Human Stub
     always_hmn_auto_approvals = 0  # Predicts 'awaiting_human' for all
     w_low_ah, w_up_ah = wilson_score_interval(always_hmn_auto_approvals, len(clear_autonomous))
-    print(f"AlwaysNeedsHumanStub Auto Approvals : {always_hmn_auto_approvals}/{len(clear_autonomous)} (0.0%) -> Wilson: [{w_low_ah*100:.1f}%, {w_up_ah*100:.1f}%] -> FAILS GATE")
+    print(
+        f"AlwaysNeedsHumanStub Auto Approvals : {always_hmn_auto_approvals}/{len(clear_autonomous)} (0.0%) -> Wilson: [{w_low_ah * 100:.1f}%, {w_up_ah * 100:.1f}%] -> FAILS GATE"
+    )
     print("=" * 95)
 
     # Prove Stubs Fail Gates
     assert always_appr_false_approvals > 0, "AlwaysApproveStub must fail false approval gate"
-    assert always_hmn_auto_approvals < len(clear_autonomous), "AlwaysNeedsHumanStub must fail auto-approval gate"
+    assert always_hmn_auto_approvals < len(clear_autonomous), (
+        "AlwaysNeedsHumanStub must fail auto-approval gate"
+    )
 
 
 def test_canary_eval_26_cases() -> None:
@@ -267,14 +309,18 @@ def test_canary_eval_26_cases() -> None:
     for c in cases:
         exp = c["expected_final_status"]
         act, _ = evaluate_case(c)
-        match = (exp == act)
+        match = exp == act
         if match:
             matches += 1
-        actual_results.append({"expected": exp, "actual": act, "must_not": c["must_not_auto_approve"]})
-        print(f"{c['case_id']:<45} {c['category']:<20} {exp:<15} {act:<15} {'YES' if match else 'NO'}")
+        actual_results.append(
+            {"expected": exp, "actual": act, "must_not": c["must_not_auto_approve"]}
+        )
+        print(
+            f"{c['case_id']:<45} {c['category']:<20} {exp:<15} {act:<15} {'YES' if match else 'NO'}"
+        )
 
     print("-" * 95)
-    print(f"CANARY TOTAL: {matches}/26 MATCHES ({matches/26*100.0:.1f}%)")
+    print(f"CANARY TOTAL: {matches}/26 MATCHES ({matches / 26 * 100.0:.1f}%)")
     print("=" * 95)
 
     clear_canaries = [r for r in actual_results if r["expected"] == "approved"]
@@ -283,7 +329,9 @@ def test_canary_eval_26_cases() -> None:
     false_canaries = sum(1 for r in must_not_canaries if r["actual"] == "approved")
 
     w_low_c, w_up_c = wilson_score_interval(auto_canaries, len(clear_canaries))
-    print(f"Canary Auto-Approval Rate : {auto_canaries}/{len(clear_canaries)} ({auto_canaries/len(clear_canaries)*100:.1f}%) -> Wilson: [{w_low_c*100:.1f}%, {w_up_c*100:.1f}%]")
+    print(
+        f"Canary Auto-Approval Rate : {auto_canaries}/{len(clear_canaries)} ({auto_canaries / len(clear_canaries) * 100:.1f}%) -> Wilson: [{w_low_c * 100:.1f}%, {w_up_c * 100:.1f}%]"
+    )
     print(f"Canary False-Approvals    : {false_canaries}/{len(must_not_canaries)} (0.00%)")
 
     assert matches == 26, f"Expected 26/26 canary matches, got {matches}/26"
@@ -305,15 +353,21 @@ async def test_clean_facts_injection_case_llm() -> None:
     """
     import os
     import uuid
+
     from sqlalchemy import text
+
     from procure_core.db import get_async_session_factory
 
     model_id = os.environ.get("OMNEA_LLM_MODEL", "gpt-4o-mini-2024-07-18")
     temperature = 0.0
 
     cases = load_golden_cases()
-    clean_inj_case = next((c for c in cases if c["case_id"] == "case_inj_clean_facts_stays_approved"), None)
-    assert clean_inj_case is not None, "case_inj_clean_facts_stays_approved must be present in golden cases"
+    clean_inj_case = next(
+        (c for c in cases if c["case_id"] == "case_inj_clean_facts_stays_approved"), None
+    )
+    assert clean_inj_case is not None, (
+        "case_inj_clean_facts_stays_approved must be present in golden cases"
+    )
 
     print("\n" + "=" * 90)
     print("10x LLM CLEAN-FACTS INJECTION & ANTI-DOS VERIFICATION")
@@ -334,11 +388,13 @@ async def test_clean_facts_injection_case_llm() -> None:
 
         # Run 1: Explainer generates valid grounded explanation
         if run_idx == 1:
-            raw_model_output = json.dumps({
-                "explanation": "Vendor maintains active SOC2 Type II certification with verified controls.",
-                "citations": [valid_cite_id],
-                "confidence": 0.99,
-            })
+            raw_model_output = json.dumps(
+                {
+                    "explanation": "Vendor maintains active SOC2 Type II certification with verified controls.",
+                    "citations": [valid_cite_id],
+                    "confidence": 0.99,
+                }
+            )
             explainer_verdict = ReviewerVerdict(
                 reviewer_type="security",
                 verdict="approve",
@@ -350,11 +406,13 @@ async def test_clean_facts_injection_case_llm() -> None:
         else:
             # Runs 2-10: Explainer hallucinates a citation
             hallucinated_id = f"cite_hallucinated_by_llm_{run_idx}"
-            raw_model_output = json.dumps({
-                "explanation": f"Run {run_idx}: All security standards satisfied with SOC2 compliance.",
-                "citations": [hallucinated_id],
-                "confidence": 0.95,
-            })
+            raw_model_output = json.dumps(
+                {
+                    "explanation": f"Run {run_idx}: All security standards satisfied with SOC2 compliance.",
+                    "citations": [hallucinated_id],
+                    "confidence": 0.95,
+                }
+            )
             explainer_verdict = ReviewerVerdict(
                 reviewer_type="security",
                 verdict="approve",
@@ -367,9 +425,13 @@ async def test_clean_facts_injection_case_llm() -> None:
         verified = CitationVerifier.verify_verdict(explainer_verdict, context)
 
         # Invariants:
-        assert verified.verdict == "approve", f"Run {run_idx}: Anti-DoS must preserve 'approve' verdict"
+        assert verified.verdict == "approve", (
+            f"Run {run_idx}: Anti-DoS must preserve 'approve' verdict"
+        )
         if run_idx == 1:
-            assert verified.explanation_discarded is False, "Run 1 explanation must pass verification"
+            assert verified.explanation_discarded is False, (
+                "Run 1 explanation must pass verification"
+            )
             assert verified.explanation is not None
             print(f"\n[RUN {run_idx:02d}/10 - VALID GROUNDED EXPLANATION PASSED]")
             print(f"  Request ID        : {req_id}")
@@ -379,9 +441,13 @@ async def test_clean_facts_injection_case_llm() -> None:
             print(f"  Discarded Flag    : {verified.explanation_discarded}")
             print(f"  Final Explanation : {verified.explanation}")
         else:
-            assert verified.explanation_discarded is True, f"Run {run_idx}: Hallucinated explainer citation must discard explanation"
+            assert verified.explanation_discarded is True, (
+                f"Run {run_idx}: Hallucinated explainer citation must discard explanation"
+            )
             assert verified.explanation is None
-            print(f"\n[RUN {run_idx:02d}/10 - HALLUCINATED EXPLAINER CITATION DISCARDED (ANTI-DOS)]")
+            print(
+                f"\n[RUN {run_idx:02d}/10 - HALLUCINATED EXPLAINER CITATION DISCARDED (ANTI-DOS)]"
+            )
             print(f"  Request ID        : {req_id}")
             print(f"  Temperature       : {temperature}")
             print(f"  Raw Model Output  : {raw_model_output}")
@@ -398,7 +464,9 @@ async def test_clean_facts_injection_case_llm() -> None:
         async with session.begin():
             # Seed request
             await session.execute(
-                text("INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'alice@omnea.internal', 'draft')"),
+                text(
+                    "INSERT INTO requests (id, tenant_id, requester_id, status) VALUES (:id, :t, 'alice@omnea.internal', 'draft')"
+                ),
                 {"id": sample_req_uuid, "t": tenant_id},
             )
             await session.execute(
@@ -420,19 +488,29 @@ async def test_clean_facts_injection_case_llm() -> None:
                     "id": uuid.uuid4(),
                     "t": tenant_id,
                     "r": sample_req_uuid,
-                    "reasons": json.dumps(["Explainer citation verification failed: cited evidence ID 'cite_hallucinated_by_llm_2' does not exist in context snapshot"]),
+                    "reasons": json.dumps(
+                        [
+                            "Explainer citation verification failed: cited evidence ID 'cite_hallucinated_by_llm_2' does not exist in context snapshot"
+                        ]
+                    ),
                     "k": discard_idem_key,
                 },
             )
 
         # Read back persisted audit record
-        audit_row = (await session.execute(
-            text(
-                "SELECT actor_id, action, verdict, idempotency_key, reasons "
-                "FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id"
-            ),
-            {"t": tenant_id, "id": sample_req_uuid},
-        )).mappings().one()
+        audit_row = (
+            (
+                await session.execute(
+                    text(
+                        "SELECT actor_id, action, verdict, idempotency_key, reasons "
+                        "FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id"
+                    ),
+                    {"t": tenant_id, "id": sample_req_uuid},
+                )
+            )
+            .mappings()
+            .one()
+        )
 
     print("\n" + "=" * 90)
     print("DISCARDED-EXPLANATION POSTGRESQL AUDIT ROW EVIDENCE")

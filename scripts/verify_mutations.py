@@ -21,8 +21,6 @@ For every mutant:
 
 from __future__ import annotations
 
-import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -31,8 +29,17 @@ from pathlib import Path
 def extract_raw_failure(output: str) -> str:
     """Extract raw FAILED lines and assertion errors from pytest output."""
     lines = output.splitlines()
-    failed_lines = [l for l in lines if l.startswith("FAILED ") or "AssertionError" in l or "UniqueViolationError" in l or "IntegrityError" in l]
-    return "\n".join(failed_lines) if failed_lines else "Non-zero exit without explicit FAILED summary"
+    failed_lines = [
+        l
+        for l in lines
+        if l.startswith("FAILED ")
+        or "AssertionError" in l
+        or "UniqueViolationError" in l
+        or "IntegrityError" in l
+    ]
+    return (
+        "\n".join(failed_lines) if failed_lines else "Non-zero exit without explicit FAILED summary"
+    )
 
 
 def run_mutation_test(
@@ -43,12 +50,12 @@ def run_mutation_test(
     pytest_args: list[str],
 ) -> dict[str, str]:
     """Execute a single measured mutation test cycle against a real production call site."""
-    print(f"\n================================================================================")
+    print("\n================================================================================")
     print(f"RUNNING MUTANT: {name}")
     print(f"Target File: {file_path}")
     print(f"Target Code:\n  {target_str.strip()}")
     print(f"Mutated Code:\n  {mutant_str.strip()}")
-    print(f"================================================================================")
+    print("================================================================================")
 
     original_code = file_path.read_text(encoding="utf-8")
     if target_str not in original_code:
@@ -84,9 +91,11 @@ def run_mutation_test(
     if restored_exit_code != 0:
         print(res_restored.stdout)
         print(res_restored.stderr)
-        raise AssertionError(f"Original test failed after restore for {name}! (exit_code={restored_exit_code})")
+        raise AssertionError(
+            f"Original test failed after restore for {name}! (exit_code={restored_exit_code})"
+        )
 
-    print(f"[CODE RESTORED] exit_code=0 (PASSED)")
+    print("[CODE RESTORED] exit_code=0 (PASSED)")
 
     return {
         "name": name,
@@ -103,7 +112,13 @@ def main() -> None:
         # Mutant 1: activities.py audit log idempotency check
         {
             "name": "Mutant 1: Audit Idempotency Guard (activities.py:455)",
-            "file_path": root / "services" / "workers" / "src" / "workers" / "approval" / "activities.py",
+            "file_path": root
+            / "services"
+            / "workers"
+            / "src"
+            / "workers"
+            / "approval"
+            / "activities.py",
             "target_str": 'if await check_idempotency_seen(session, tenant_id, idempotency_key, "approval_audit_records"):',
             "mutant_str": 'if False and await check_idempotency_seen(session, tenant_id, idempotency_key, "approval_audit_records"):',
             "pytest_args": [
@@ -116,7 +131,13 @@ def main() -> None:
         # Mutant 2: activities.py outbox idempotency check
         {
             "name": "Mutant 2: Outbox Idempotency Guard (activities.py:506)",
-            "file_path": root / "services" / "workers" / "src" / "workers" / "approval" / "activities.py",
+            "file_path": root
+            / "services"
+            / "workers"
+            / "src"
+            / "workers"
+            / "approval"
+            / "activities.py",
             "target_str": 'if await check_idempotency_seen(session, tenant_id, idempotency_key, "domain_events_outbox"):',
             "mutant_str": 'if False and await check_idempotency_seen(session, tenant_id, idempotency_key, "domain_events_outbox"):',
             "pytest_args": [
@@ -129,7 +150,13 @@ def main() -> None:
         # Mutant 3: activities.py outbox idempotency check against Worker Crash Test 05
         {
             "name": "Mutant 3: Outbox Idempotency Guard against Crash Test (activities.py:506 -> test_05)",
-            "file_path": root / "services" / "workers" / "src" / "workers" / "approval" / "activities.py",
+            "file_path": root
+            / "services"
+            / "workers"
+            / "src"
+            / "workers"
+            / "approval"
+            / "activities.py",
             "target_str": 'if await check_idempotency_seen(session, tenant_id, idempotency_key, "domain_events_outbox"):',
             "mutant_str": 'if False and await check_idempotency_seen(session, tenant_id, idempotency_key, "domain_events_outbox"):',
             "pytest_args": [
@@ -142,7 +169,13 @@ def main() -> None:
         # Mutant 4: activities.py Slack post DB lookup guard against Worker Crash Test 05
         {
             "name": "Mutant 4: Slack Post DB Lookup Guard (activities.py:557 -> test_05)",
-            "file_path": root / "services" / "workers" / "src" / "workers" / "approval" / "activities.py",
+            "file_path": root
+            / "services"
+            / "workers"
+            / "src"
+            / "workers"
+            / "approval"
+            / "activities.py",
             "target_str": "        if existing_ts:\n            # On retry: message was already initiated/posted. Return existing ts (in-place update)\n            return existing_ts",
             "mutant_str": "        if False and existing_ts:\n            return existing_ts",
             "pytest_args": [
@@ -155,7 +188,13 @@ def main() -> None:
         # Mutant 5: slack_interactions.py handler authorization call
         {
             "name": "Mutant 5: Slack Handler Approver Authorization Call (slack_interactions.py:160)",
-            "file_path": root / "services" / "workers" / "src" / "workers" / "approval" / "slack_interactions.py",
+            "file_path": root
+            / "services"
+            / "workers"
+            / "src"
+            / "workers"
+            / "approval"
+            / "slack_interactions.py",
             "target_str": "    is_authorized = authorize_approver(\n        actor_id=actor_id,\n        requester_id=requester_id,\n        assigned_approver_id=assigned_approver_id,\n        is_admin=False,\n    )",
             "mutant_str": "    is_authorized = True  # MUTATED: bypass approver authorization",
             "pytest_args": [
@@ -168,7 +207,13 @@ def main() -> None:
         # Mutant 6: verifier.py rule citation verifier check
         {
             "name": "Mutant 6: Citation Verifier Nonexistent Evidence ID Guard (verifier.py:47)",
-            "file_path": root / "packages" / "procure_agents" / "src" / "procure_agents" / "approval" / "verifier.py",
+            "file_path": root
+            / "packages"
+            / "procure_agents"
+            / "src"
+            / "procure_agents"
+            / "approval"
+            / "verifier.py",
             "target_str": "if eid not in valid_citations:",
             "mutant_str": "if False and eid not in valid_citations:",
             "pytest_args": [
@@ -181,7 +226,13 @@ def main() -> None:
         # Mutant 7: fallback.py assigned-approver & self-approval guard (testing BOTH test_03 and test_09)
         {
             "name": "Mutant 7: Assigned Approver / Self-Approval Guard (fallback.py:98 -> test_03 & test_09)",
-            "file_path": root / "packages" / "procure_agents" / "src" / "procure_agents" / "approval" / "fallback.py",
+            "file_path": root
+            / "packages"
+            / "procure_agents"
+            / "src"
+            / "procure_agents"
+            / "approval"
+            / "fallback.py",
             "target_str": "    if actor_id == requester_id:\n        return False",
             "mutant_str": "    if actor_id == requester_id:\n        return True  # MUTATED: self-approval permitted",
             "pytest_args": [

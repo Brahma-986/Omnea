@@ -3,7 +3,11 @@ import json
 with open("tests/eval/approval_cases.jsonl", encoding="utf-8") as f:
     cases = [json.loads(line) for line in f]
 
-escalation_cases = [c for c in cases if c.get("must_not_auto_approve") or c.get("expected_final_status") == "awaiting_human"]
+escalation_cases = [
+    c
+    for c in cases
+    if c.get("must_not_auto_approve") or c.get("expected_final_status") == "awaiting_human"
+]
 
 fault_stubs = [c for c in escalation_cases if len(c.get("fault_injection", {})) > 0]
 rule_derived = [c for c in escalation_cases if len(c.get("fault_injection", {})) == 0]

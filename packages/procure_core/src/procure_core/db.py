@@ -1,7 +1,9 @@
 """Database engine and session management for PostgreSQL."""
 
 from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -52,6 +54,40 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     session_factory = get_async_session_factory()
     async with session_factory() as session:
         try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+
+
+@asynccontextmanager
+async def get_tenant_session(
+    tenant_id: str,
+    settings: Settings | None = None,
+) -> AsyncGenerator[AsyncSession, None]:
+    """Yield a tenant-scoped async database session with session RLS variable set.
+
+    Args:
+        tenant_id: Non-empty tenant identifier strictly required for tenant scoping.
+        settings: Optional custom Settings instance.
+
+    Yields:
+        AsyncSession: Scoped database session with app.tenant_id configured.
+
+    Raises:
+        ValueError: If tenant_id is missing, null, or empty whitespace.
+    """
+    if not tenant_id or not str(tenant_id).strip():
+        raise ValueError("tenant_id is strictly required for tenant-scoped database sessions")
+
+    session_factory = get_async_session_factory(settings)
+    async with session_factory() as session:
+        try:
+            await session.execute(
+                text("SELECT set_config('app.tenant_id', :t, true);"),
+                {"t": str(tenant_id).strip()},
+            )
             yield session
             await session.commit()
         except Exception:

@@ -1,12 +1,7 @@
 """Procure Agents pure domain package."""
 
-from procure_agents.intent import (
-    IntakeExtractor,
-    IntentClassifier,
-    format_merged_text,
-    generate_clarifying_question,
-)
-from procure_agents.llm import FakeLLMClient, LLMClientProtocol, ResilientLLMClient
+from typing import Any
+
 from procure_agents.models import (
     BillingPeriod,
     ClassificationType,
@@ -25,6 +20,7 @@ __all__ = [
     "SpendParseResult",
     "ProcurementIntent",
     "LLMClientProtocol",
+    "LLMTextResponse",
     "ResilientLLMClient",
     "FakeLLMClient",
     "IntentClassifier",
@@ -32,4 +28,27 @@ __all__ = [
     "generate_clarifying_question",
     "format_merged_text",
     "parse_and_annualize_spend",
+    "TprmDomainAssessmentAgent",
+    "CitationVerifier",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    if name in (
+        "IntakeExtractor",
+        "IntentClassifier",
+        "format_merged_text",
+        "generate_clarifying_question",
+    ):
+        import procure_agents.intent as intent
+
+        return getattr(intent, name)
+    if name in ("FakeLLMClient", "LLMClientProtocol", "LLMTextResponse", "ResilientLLMClient"):
+        import procure_agents.llm as llm
+
+        return getattr(llm, name)
+    if name in ("TprmDomainAssessmentAgent", "CitationVerifier"):
+        import procure_agents.tprm as tprm
+
+        return getattr(tprm, name)
+    raise AttributeError(f"module 'procure_agents' has no attribute '{name}'")

@@ -41,7 +41,9 @@ async def test_restart_of_failed_request_produces_fresh_run() -> None:
                     task_queue="lifecycle-q",
                     id_reuse_policy=WorkflowIDReusePolicy.ALLOW_DUPLICATE_FAILED_ONLY,
                 )
-            assert "Simulated failure for restart test" in str(getattr(exc_info.value, "cause", exc_info.value))
+            assert "Simulated failure for restart test" in str(
+                getattr(exc_info.value, "cause", exc_info.value)
+            )
 
             # 2. Run 2: Restarting with the same workflow_id produces a fresh successful run
             handle = await env.client.start_workflow(

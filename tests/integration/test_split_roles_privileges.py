@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import uuid
+
 import pytest
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -24,7 +25,9 @@ async def test_procure_workflow_least_privilege_guards() -> None:
         async with engine.connect() as c:
             with pytest.raises(Exception) as exc:
                 await c.execute(text(sql), params or {})
-            assert "permission denied" in str(exc.value).lower(), f"Expected permission denied for: {sql}, got: {exc.value}"
+            assert "permission denied" in str(exc.value).lower(), (
+                f"Expected permission denied for: {sql}, got: {exc.value}"
+            )
 
     # 1. SELECT on context tables works
     async with engine.connect() as conn:
@@ -65,7 +68,9 @@ async def test_procure_workflow_least_privilege_guards() -> None:
     )
 
     # 7. UPDATE on vendors is blocked
-    await check_stmt_blocked("UPDATE vendors SET name = 'Hacked' WHERE id = '00000000-0000-0000-0000-000000000000';")
+    await check_stmt_blocked(
+        "UPDATE vendors SET name = 'Hacked' WHERE id = '00000000-0000-0000-0000-000000000000';"
+    )
 
     # 8. UPDATE on requests.requester_id is blocked (only status and updated_at permitted)
     await check_stmt_blocked(
@@ -92,7 +97,9 @@ async def test_procure_reviewer_is_strictly_read_only() -> None:
         async with engine.connect() as c:
             with pytest.raises(Exception) as exc:
                 await c.execute(text(sql), params or {})
-            assert "permission denied" in str(exc.value).lower(), f"Expected permission denied for: {sql}, got: {exc.value}"
+            assert "permission denied" in str(exc.value).lower(), (
+                f"Expected permission denied for: {sql}, got: {exc.value}"
+            )
 
     # SELECT on requests works
     async with engine.connect() as conn:
@@ -125,7 +132,9 @@ async def test_admin_cannot_update_or_delete_audit_table() -> None:
             with pytest.raises(Exception) as exc:
                 await c.execute(text(sql))
             msg = str(exc.value).lower()
-            assert "permission denied" in msg or "append-only" in msg, f"Expected append-only/permission denied: {msg}"
+            assert "permission denied" in msg or "append-only" in msg, (
+                f"Expected append-only/permission denied: {msg}"
+            )
 
     # UPDATE is blocked
     await check_admin_blocked("UPDATE approval_audit_records SET action = 'tampered';")

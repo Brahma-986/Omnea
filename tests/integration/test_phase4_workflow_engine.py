@@ -6,16 +6,16 @@ reservation lifecycle, crash/replay idempotency, self-approval guards, and negat
 
 from __future__ import annotations
 
-from typing import Any
 import asyncio
 import os
+import uuid
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
-import uuid
+from typing import Any
+
 import pytest
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 from temporalio import workflow
 from temporalio.client import WorkflowHistory
 from temporalio.common import WorkflowIDReusePolicy
@@ -23,7 +23,7 @@ from temporalio.exceptions import WorkflowAlreadyStartedError
 from temporalio.testing import WorkflowEnvironment
 from temporalio.worker import Replayer, Worker
 
-from procure_agents.approval.fallback import authorize_approver, format_auth_refused_idempotency_key
+from procure_agents.approval.fallback import format_auth_refused_idempotency_key
 from procure_agents.approval.models import (
     ActiveContractSummary,
     ApprovalContextSnapshot,
@@ -31,7 +31,6 @@ from procure_agents.approval.models import (
     BudgetSnapshot,
     CitationFact,
     ProcurementIntentSummary,
-    ReviewerVerdict,
     SecurityReviewSummary,
 )
 from procure_core.db import get_async_session_factory
@@ -127,8 +126,9 @@ async def _seed_test_data(
 async def register_search_attributes(client: Any) -> None:
     """Register custom search attributes on Temporal test server."""
     try:
-        from temporalio.api.operatorservice.v1 import AddSearchAttributesRequest
         from temporalio.api.enums.v1 import IndexedValueType
+        from temporalio.api.operatorservice.v1 import AddSearchAttributesRequest
+
         await client.operator_service.add_search_attributes(
             AddSearchAttributesRequest(
                 namespace="default",
@@ -140,7 +140,7 @@ async def register_search_attributes(client: Any) -> None:
                     "EstimatedSpend": IndexedValueType.INDEXED_VALUE_TYPE_DOUBLE,
                     "VendorId": IndexedValueType.INDEXED_VALUE_TYPE_KEYWORD,
                     "NeedsHuman": IndexedValueType.INDEXED_VALUE_TYPE_BOOL,
-                }
+                },
             )
         )
     except Exception:
@@ -185,9 +185,24 @@ async def test_01_all_three_approve_concurrent_overlap() -> None:
                     snapshot_hash="h_valid_1",
                     as_of="2026-11-13T00:00:00Z",
                     citations=[
-                        CitationFact(citation_id="c_spend", source_table="spend", fact="Spend 5000 within budget", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_sec", source_table="security", fact="SOC2 verified compliant", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_leg", source_table="legal", fact="Standard terms approved", as_of="2026-11-13"),
+                        CitationFact(
+                            citation_id="c_spend",
+                            source_table="spend",
+                            fact="Spend 5000 within budget",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_sec",
+                            source_table="security",
+                            fact="SOC2 verified compliant",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_leg",
+                            source_table="legal",
+                            fact="Standard terms approved",
+                            as_of="2026-11-13",
+                        ),
                     ],
                     security_reviews=[
                         SecurityReviewSummary(
@@ -243,14 +258,18 @@ async def test_01_all_three_approve_concurrent_overlap() -> None:
 
                 # Verify reservation is committed
                 res_status = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert res_status == "committed"
 
                 # Verify outbox event emitted
                 event_type = await session.scalar(
-                    text("SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                    text(
+                        "SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"
+                    ),
                     {"t": tenant_id, "id": str(req_id)},
                 )
                 assert event_type == "request.approved"
@@ -294,7 +313,14 @@ async def test_02_hard_reject_siblings_finish_rule_checks() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_vuln_1",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c_spend", source_table="spend", fact="Spend 4000", as_of="2026-11-13")],
+                    citations=[
+                        CitationFact(
+                            citation_id="c_spend",
+                            source_table="spend",
+                            fact="Spend 4000",
+                            as_of="2026-11-13",
+                        )
+                    ],
                     security_reviews=[
                         SecurityReviewSummary(
                             doc_type="SOC2",
@@ -347,14 +373,18 @@ async def test_02_hard_reject_siblings_finish_rule_checks() -> None:
 
                 # Outbox recorded request.rejected
                 evt = await session.scalar(
-                    text("SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                    text(
+                        "SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"
+                    ),
                     {"t": tenant_id, "id": str(req_id)},
                 )
                 assert evt == "request.rejected"
 
                 # Reservation was released
                 res_status = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert res_status == "released"
@@ -398,8 +428,19 @@ async def test_03_human_signal_duplicate_and_unauthorized() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_vp_1",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
                 budget=BudgetSnapshot(
@@ -432,7 +473,10 @@ async def test_03_human_signal_duplicate_and_unauthorized() -> None:
                 action="approve",
                 idempotency_key=f"{tenant_id}:{req_id}:auth_refused:alice",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, unauth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision,
+                unauth_sig.model_dump(mode="json"),
+            )
 
             # 2. Authorized approver signs off
             auth_sig = HumanDecisionSignal(
@@ -442,10 +486,14 @@ async def test_03_human_signal_duplicate_and_unauthorized() -> None:
                 comment="Approved via interactive Slack message",
                 idempotency_key=f"{tenant_id}:{req_id}:sig_vp_1",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json")
+            )
 
             # 3. Duplicate signal sent with same key -> Idempotently ignored
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json")
+            )
 
             result = await handle.result()
             assert result["status"] == "approved"
@@ -502,8 +550,19 @@ async def test_04_t1_t2_t3_durable_timers() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_time_1",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
                 budget=BudgetSnapshot(
@@ -551,7 +610,7 @@ async def test_04_t1_t2_t3_durable_timers() -> None:
                 ).fetchone()
                 assert step_row is not None
                 t1, t2, t3, st = step_row
-                print(f"\n[DURABLE TIMERS TEST 04 TIME-SKIPPED EVIDENCE]")
+                print("\n[DURABLE TIMERS TEST 04 TIME-SKIPPED EVIDENCE]")
                 print(f"  T1 Reminder Fired At   : {t1}")
                 print(f"  T2 Escalated Fired At  : {t2}")
                 print(f"  T3 Expired Fired At    : {t3}")
@@ -570,8 +629,12 @@ async def test_04_t1_t2_t3_durable_timers() -> None:
                 expected_delta_3_2 = inp.t3_seconds - inp.t2_seconds
                 print(f"  Delta (T2 - T1): {delta_t2_t1}s (configured {expected_delta_2_1}s)")
                 print(f"  Delta (T3 - T2): {delta_t3_t2}s (configured {expected_delta_3_2}s)")
-                assert abs(delta_t2_t1 - expected_delta_2_1) <= 1.0, f"T2 - T1 delta {delta_t2_t1}s must match {expected_delta_2_1}s"
-                assert abs(delta_t3_t2 - expected_delta_3_2) <= 1.0, f"T3 - T2 delta {delta_t3_t2}s must match {expected_delta_3_2}s"
+                assert abs(delta_t2_t1 - expected_delta_2_1) <= 1.0, (
+                    f"T2 - T1 delta {delta_t2_t1}s must match {expected_delta_2_1}s"
+                )
+                assert abs(delta_t3_t2 - expected_delta_3_2) <= 1.0, (
+                    f"T3 - T2 delta {delta_t3_t2}s must match {expected_delta_3_2}s"
+                )
 
 
 @pytest.mark.asyncio
@@ -608,8 +671,19 @@ async def test_04b_backup_approver_only_after_t2() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_time_b",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
                 budget=BudgetSnapshot(
@@ -651,26 +725,35 @@ async def test_04b_backup_approver_only_after_t2() -> None:
                 action="approve",
                 idempotency_key=f"{tenant_id}:{req_id}:backup_early",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, backup_sig_early.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision,
+                backup_sig_early.model_dump(mode="json"),
+            )
 
             # Wait for 403 refusal record in DB
             refusal_action = None
             for _ in range(50):
                 async with session_factory() as session:
                     refusal_action = await session.scalar(
-                        text("SELECT action FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id AND actor_id = 'backup_approver'"),
+                        text(
+                            "SELECT action FROM approval_audit_records WHERE tenant_id = :t AND request_id = :id AND actor_id = 'backup_approver'"
+                        ),
                         {"t": tenant_id, "id": req_id},
                     )
                     if refusal_action:
                         break
                 await asyncio.sleep(0.05)
-            assert refusal_action == "authorization_refused", f"Expected refusal before T2, got: {refusal_action}"
+            assert refusal_action == "authorization_refused", (
+                f"Expected refusal before T2, got: {refusal_action}"
+            )
 
             # 2. Advance time past T2: wait until t2_escalated_at is populated in DB
             for _ in range(100):
                 async with session_factory() as session:
                     t2_at = await session.scalar(
-                        text("SELECT t2_escalated_at FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'finance_review'"),
+                        text(
+                            "SELECT t2_escalated_at FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'finance_review'"
+                        ),
                         {"t": tenant_id, "id": req_id},
                     )
                     if t2_at is not None:
@@ -684,10 +767,15 @@ async def test_04b_backup_approver_only_after_t2() -> None:
                 action="approve",
                 idempotency_key=f"{tenant_id}:{req_id}:backup_after_t2",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, backup_sig_valid.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision,
+                backup_sig_valid.model_dump(mode="json"),
+            )
             res = await handle.result()
-            assert res["status"] == "approved", f"Backup approval after T2 must succeed, got: {res['status']}"
-            print(f"\n[BACKUP APPROVER GUARD EVIDENCE]")
+            assert res["status"] == "approved", (
+                f"Backup approval after T2 must succeed, got: {res['status']}"
+            )
+            print("\n[BACKUP APPROVER GUARD EVIDENCE]")
             print(f"  Attempt 1 (before T2): Audited 403 Refusal (action={refusal_action})")
             print(f"  Attempt 2 (after T2) : Authorized Sign-off (result status={res['status']})")
 
@@ -727,8 +815,17 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
             context=ApprovalContextSnapshot(
                 snapshot_hash="h_crash_1",
                 as_of="2026-11-13T00:00:00Z",
-                citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                citations=[
+                    CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")
+                ],
+                security_reviews=[
+                    SecurityReviewSummary(
+                        doc_type="SOC2",
+                        status="compliant",
+                        audit_period_end="2027-01-01",
+                        is_fresh=True,
+                    )
+                ],
             ),
             policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
             budget=BudgetSnapshot(
@@ -748,8 +845,9 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
 
         # Enable fault injection for simulated crash
         os.environ["ENABLE_TEST_FAULT_INJECTION"] = "1"
-        from workers.approval.activities import _MOCK_SLACK_MESSAGES
         import workers.approval.activities as act_mod
+        from workers.approval.activities import _MOCK_SLACK_MESSAGES
+
         _MOCK_SLACK_MESSAGES.clear()
         act_mod._SLACK_POST_CALL_COUNT = 0
 
@@ -773,7 +871,7 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
             await asyncio.sleep(0.5)
 
         # Worker 1 is killed mid-flow after fake Slack call returned ts
-        print(f"\n[REAL WORKER SHUTDOWN & RESTART TEST 05]")
+        print("\n[REAL WORKER SHUTDOWN & RESTART TEST 05]")
         print("  Worker 1 killed after reviewer completion and immediately after fake Slack call.")
         # In-memory cache is wiped out (simulating fresh process startup for Worker 2)
         _MOCK_SLACK_MESSAGES.clear()
@@ -786,14 +884,18 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
             activities=APPROVAL_ACTIVITIES,
             identity="worker-2",
         ):
-            print("  Worker 2 started on same task-queue 'crash-q'. Delivering human decision signal...")
+            print(
+                "  Worker 2 started on same task-queue 'crash-q'. Delivering human decision signal..."
+            )
             auth_sig = HumanDecisionSignal(
                 actor_id="vp_finance",
                 step_name="finance_review",
                 action="approve",
                 idempotency_key=f"{tenant_id}:{req_id}:sig_resume",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json")
+            )
             res = await handle.result()
             assert res["status"] == "approved"
             print("  Workflow completed successfully under Worker 2 with status='approved'.")
@@ -816,7 +918,9 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
 
             # Exactly one budget reservation row
             res_count = await session.scalar(
-                text("SELECT count(*) FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                text(
+                    "SELECT count(*) FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                ),
                 {"t": tenant_id, "id": req_id},
             )
             print(f"  Budget reservation rows: {res_count}")
@@ -835,25 +939,34 @@ async def test_05_worker_crash_and_resume_idempotency() -> None:
             print("  Approval Audit Records:")
             for actor, act, count in audit_counts:
                 print(f"    - actor='{actor}', action='{act}': count={count}")
-                assert count == 1, f"Duplicate audit rows detected for {actor} ({act}): count={count}"
+                assert count == 1, (
+                    f"Duplicate audit rows detected for {actor} ({act}): count={count}"
+                )
 
             # Verify exactly one Slack notification ts recorded on approval_steps
             slack_ts_count = await session.scalar(
-                text("SELECT count(DISTINCT slack_message_ts) FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND slack_message_ts IS NOT NULL"),
+                text(
+                    "SELECT count(DISTINCT slack_message_ts) FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND slack_message_ts IS NOT NULL"
+                ),
                 {"t": tenant_id, "id": req_id},
             )
             print(f"  Distinct Slack notification timestamps on steps: {slack_ts_count}")
-            assert slack_ts_count == 1, f"Expected exactly 1 Slack notification message, got {slack_ts_count}"
+            assert slack_ts_count == 1, (
+                f"Expected exactly 1 Slack notification message, got {slack_ts_count}"
+            )
 
         # Assert exactly 1 visible message in Slack channel after retry
         visible_slack = [
-            v for k, v in _MOCK_SLACK_MESSAGES.items()
-            if tenant_id in k and str(req_id) in k
+            v for k, v in _MOCK_SLACK_MESSAGES.items() if tenant_id in k and str(req_id) in k
         ]
         print(f"  Visible Slack Messages in Channel after Retry: {len(visible_slack)}")
-        assert len(visible_slack) == 1, f"Expected exactly 1 visible Slack message after retry, got {len(visible_slack)}"
+        assert len(visible_slack) == 1, (
+            f"Expected exactly 1 visible Slack message after retry, got {len(visible_slack)}"
+        )
         print(f"  External Slack API Post Calls: {act_mod._SLACK_POST_CALL_COUNT}")
-        assert act_mod._SLACK_POST_CALL_COUNT == 1, f"Expected exactly 1 external Slack API call, got {act_mod._SLACK_POST_CALL_COUNT}"
+        assert act_mod._SLACK_POST_CALL_COUNT == 1, (
+            f"Expected exactly 1 external Slack API call, got {act_mod._SLACK_POST_CALL_COUNT}"
+        )
 
 
 @pytest.mark.asyncio
@@ -888,8 +1001,17 @@ async def test_05b_outbox_worker_crash_and_resume_idempotency() -> None:
             context=ApprovalContextSnapshot(
                 snapshot_hash="h_outbox_crash",
                 as_of="2026-11-13T00:00:00Z",
-                citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                citations=[
+                    CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")
+                ],
+                security_reviews=[
+                    SecurityReviewSummary(
+                        doc_type="SOC2",
+                        status="compliant",
+                        audit_period_end="2027-01-01",
+                        is_fresh=True,
+                    )
+                ],
             ),
             policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
             budget=BudgetSnapshot(
@@ -928,7 +1050,9 @@ async def test_05b_outbox_worker_crash_and_resume_idempotency() -> None:
                 action="approve",
                 idempotency_key=f"{tenant_id}:{req_id}:sig_outbox_resume",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, auth_sig.model_dump(mode="json")
+            )
             # Wait for attempt 1 crash and activity retry under idempotency guard
             res = await handle.result()
             assert res["status"] == "approved"
@@ -936,12 +1060,16 @@ async def test_05b_outbox_worker_crash_and_resume_idempotency() -> None:
         # Verify exactly one outbox event in PostgreSQL
         async with session_factory() as session:
             outbox_count = await session.scalar(
-                text("SELECT count(*) FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                text(
+                    "SELECT count(*) FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"
+                ),
                 {"t": tenant_id, "id": str(req_id)},
             )
             assert outbox_count == 1, f"Expected exactly 1 outbox event, got {outbox_count}"
-            print(f"\n[OUTBOX WORKER CRASH IDEMPOTENCY EVIDENCE]")
-            print(f"  Outbox rows in DB: {outbox_count} (zero duplicate outbox events across crash retry)")
+            print("\n[OUTBOX WORKER CRASH IDEMPOTENCY EVIDENCE]")
+            print(
+                f"  Outbox rows in DB: {outbox_count} (zero duplicate outbox events across crash retry)"
+            )
 
 
 # =============================================================================
@@ -981,8 +1109,19 @@ async def test_06_duplicate_start_returns_existing_run() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_dup",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                     active_contracts=[
                         ActiveContractSummary(
                             contract_id="c_dup_1",
@@ -996,7 +1135,13 @@ async def test_06_duplicate_start_returns_existing_run() -> None:
                     ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("10000.00"), committed=Decimal("0.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("10000.00"),
+                    committed=Decimal("0.00"),
+                ),
                 t1_seconds=1000,
                 t2_seconds=2000,
                 t3_seconds=3000,
@@ -1038,7 +1183,9 @@ async def test_06_duplicate_start_returns_existing_run() -> None:
                         {"t": tenant_id, "id": req_id},
                     )
                 ).fetchall()
-                assert len(rows) >= 3, f"Expected at least 3 reviewer audit records, got {len(rows)}"
+                assert len(rows) >= 3, (
+                    f"Expected at least 3 reviewer audit records, got {len(rows)}"
+                )
                 for actor, pol_ver in rows:
                     assert pol_ver is not None and len(pol_ver) > 0, (
                         f"Missing policy_version attribution for {actor}"
@@ -1083,11 +1230,33 @@ async def test_07_entry_gate_unresolved_vendor_blocks_review() -> None:
                     snapshot_hash="h_eg",
                     as_of="2026-11-13T00:00:00Z",
                     citations=[
-                        CitationFact(citation_id="c_spend", source_table="spend", fact="Spend within budget", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_sec", source_table="security", fact="SOC2 compliant", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_ctr", source_table="contract", fact="Valid MSA contract", as_of="2026-11-13"),
+                        CitationFact(
+                            citation_id="c_spend",
+                            source_table="spend",
+                            fact="Spend within budget",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_sec",
+                            source_table="security",
+                            fact="SOC2 compliant",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_ctr",
+                            source_table="contract",
+                            fact="Valid MSA contract",
+                            as_of="2026-11-13",
+                        ),
                     ],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                     active_contracts=[
                         ActiveContractSummary(
                             contract_id="c_eg_1",
@@ -1101,7 +1270,13 @@ async def test_07_entry_gate_unresolved_vendor_blocks_review() -> None:
                     ],
                 ),
                 policy=ApprovalPolicyRules(),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("10000.00"), committed=Decimal("0.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("10000.00"),
+                    committed=Decimal("0.00"),
+                ),
                 vendor_has_unresolved_tasks=True,  # Entry gate flag
             )
 
@@ -1124,7 +1299,9 @@ async def test_07_entry_gate_unresolved_vendor_blocks_review() -> None:
             session_factory = get_async_session_factory()
             async with session_factory() as session:
                 step_status = await session.scalar(
-                    text("SELECT status FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'entity_resolution'"),
+                    text(
+                        "SELECT status FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'entity_resolution'"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert step_status == "needs_human"
@@ -1142,8 +1319,12 @@ async def test_09_self_approval_and_cross_tenant_rejected() -> None:
     requester_id = "requester_alice"
 
     # 1. Deterministic idempotency keys are strictly isolated across tenants
-    key_a = format_auth_refused_idempotency_key(tenant_A, str(req_id), requester_id, "finance", "approve", 1)
-    key_b = format_auth_refused_idempotency_key(tenant_B, str(req_id), requester_id, "finance", "approve", 1)
+    key_a = format_auth_refused_idempotency_key(
+        tenant_A, str(req_id), requester_id, "finance", "approve", 1
+    )
+    key_b = format_auth_refused_idempotency_key(
+        tenant_B, str(req_id), requester_id, "finance", "approve", 1
+    )
     assert key_a != key_b
     assert tenant_A in key_a and tenant_B in key_b
 
@@ -1176,8 +1357,19 @@ async def test_09_self_approval_and_cross_tenant_rejected() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_self_appr",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
                 budget=BudgetSnapshot(
@@ -1219,7 +1411,10 @@ async def test_09_self_approval_and_cross_tenant_rejected() -> None:
                 action="approve",
                 idempotency_key=f"{tenant_A}:{req_id}:self_appr_attempt",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, self_appr_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision,
+                self_appr_sig.model_dump(mode="json"),
+            )
 
             # Wait for 403 refusal audit row to be recorded in DB
             refused_action = None
@@ -1296,10 +1491,14 @@ async def test_10_workflow_replay_validation() -> None:
     with pytest.raises(Exception) as exc_info:
         await mutated_replayer.replay_workflow(history)
 
-    print(f"\n[REPLAY DETERMINISM PROOF]")
+    print("\n[REPLAY DETERMINISM PROOF]")
     print(f"  Clean Replay on Exported History : PASSED ({len(history.events)} events replayed)")
-    print(f"  Mutated Replay Detection         : FAILED (Caught: {type(exc_info.value).__name__}: {str(exc_info.value)[:100]})")
-    assert "Nondeterminism" in str(exc_info.value) or "unversioned_injected_breaking_activity" in str(exc_info.value)
+    print(
+        f"  Mutated Replay Detection         : FAILED (Caught: {type(exc_info.value).__name__}: {str(exc_info.value)[:100]})"
+    )
+    assert "Nondeterminism" in str(
+        exc_info.value
+    ) or "unversioned_injected_breaking_activity" in str(exc_info.value)
 
 
 # =============================================================================
@@ -1308,10 +1507,18 @@ async def test_10_workflow_replay_validation() -> None:
 @pytest.mark.parametrize(
     "failure_mode,faults,sec_status",
     [
-        ("agent_exception", {"simulate_reviewer_exception": "Upstream LLM connection dropped"}, "compliant"),
+        (
+            "agent_exception",
+            {"simulate_reviewer_exception": "Upstream LLM connection dropped"},
+            "compliant",
+        ),
         ("malformed_json", {"simulate_malformed_json": True}, "compliant"),
         ("cap_hit", {"cap_exceeded": "max_steps"}, "compliant"),
-        ("unverifiable_citation", {"hallucinated_citation_id": "cite_hallucinated_999"}, "compliant"),
+        (
+            "unverifiable_citation",
+            {"hallucinated_citation_id": "cite_hallucinated_999"},
+            "compliant",
+        ),
         ("not_checked_fact", {}, "not_checked"),
     ],
 )
@@ -1370,9 +1577,24 @@ async def test_fail_closed_workflow_matrix(
                     snapshot_hash=f"h_{failure_mode}",
                     as_of="2026-11-13T00:00:00Z",
                     citations=[
-                        CitationFact(citation_id="c_spend", source_table="spend", fact="Spend 15000", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_sec", source_table="security", fact="SOC2", as_of="2026-11-13"),
-                        CitationFact(citation_id="c_leg", source_table="legal", fact="Terms", as_of="2026-11-13"),
+                        CitationFact(
+                            citation_id="c_spend",
+                            source_table="spend",
+                            fact="Spend 15000",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_sec",
+                            source_table="security",
+                            fact="SOC2",
+                            as_of="2026-11-13",
+                        ),
+                        CitationFact(
+                            citation_id="c_leg",
+                            source_table="legal",
+                            fact="Terms",
+                            as_of="2026-11-13",
+                        ),
                     ],
                     security_reviews=[sec_review],
                     active_contracts=[
@@ -1431,17 +1653,25 @@ async def test_fail_closed_workflow_matrix(
             # Verify reservation is active, never committed autonomously
             async with session_factory() as session:
                 res_status = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
-                assert res_status == "active", f"Reservation must be active, not committed: {res_status}"
+                assert res_status == "active", (
+                    f"Reservation must be active, not committed: {res_status}"
+                )
 
                 # Verify outbox event 'request.approved' was NOT emitted
                 outbox_approved = await session.scalar(
-                    text("SELECT count(*) FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id AND event_type = 'request.approved'"),
+                    text(
+                        "SELECT count(*) FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id AND event_type = 'request.approved'"
+                    ),
                     {"t": tenant_id, "id": str(req_id)},
                 )
-                assert outbox_approved == 0, "Approved outbox event must never be emitted on fail-closed escalation"
+                assert outbox_approved == 0, (
+                    "Approved outbox event must never be emitted on fail-closed escalation"
+                )
 
             # Cleanly cancel workflow to complete execution
             await handle.signal(ProcurementApprovalWorkflow.signal_cancel, requester_id)
@@ -1454,6 +1684,7 @@ async def test_fail_closed_workflow_matrix(
 # =============================================================================
 def test_12_negative_stubs_fail_golden_eval() -> None:
     """Proves: An 'always approve' stub and an 'always needs_human' stub both fail golden eval gates."""
+
     # 1. Always Approve Stub:
     def always_approve_stub(case: dict) -> str:
         return "approved"
@@ -1512,11 +1743,28 @@ async def test_13_cancellation_signal_releases_budget_and_updates_status() -> No
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_canc",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("100000.00"), committed=Decimal("0.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("100000.00"),
+                    committed=Decimal("0.00"),
+                ),
                 t1_seconds=500,
                 t2_seconds=1000,
                 t3_seconds=1500,
@@ -1557,7 +1805,9 @@ async def test_13_cancellation_signal_releases_budget_and_updates_status() -> No
                 assert req_status == "cancelled"
 
                 res_status = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert res_status == "released"
@@ -1601,13 +1851,43 @@ async def test_14_snapshot_refresh_lifecycle() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_stale_1",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
-                    active_contracts=[ActiveContractSummary(contract_id="c1", title="A", total_value=Decimal("5000.00"), currency="USD", status="active", start_date="2025-01-01", end_date="2026-12-31")],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
+                    active_contracts=[
+                        ActiveContractSummary(
+                            contract_id="c1",
+                            title="A",
+                            total_value=Decimal("5000.00"),
+                            currency="USD",
+                            status="active",
+                            start_date="2025-01-01",
+                            end_date="2026-12-31",
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("100000.00"), committed=Decimal("0.00")),
-                fault_injection={"simulate_snapshot_refresh_outcome": "success", "snapshot_age_seconds": 7200},
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("100000.00"),
+                    committed=Decimal("0.00"),
+                ),
+                fault_injection={
+                    "simulate_snapshot_refresh_outcome": "success",
+                    "snapshot_age_seconds": 7200,
+                },
             )
 
             wf_id = f"{tenant_id}:{req_id}"
@@ -1659,12 +1939,39 @@ async def test_15_request_info_pause_and_resume() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_rinfo",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
-                    active_contracts=[ActiveContractSummary(contract_id="c1", title="A", total_value=Decimal("60000.00"), currency="USD", status="active", start_date="2025-01-01", end_date="2026-12-31")],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
+                    active_contracts=[
+                        ActiveContractSummary(
+                            contract_id="c1",
+                            title="A",
+                            total_value=Decimal("60000.00"),
+                            currency="USD",
+                            status="active",
+                            start_date="2025-01-01",
+                            end_date="2026-12-31",
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("100000.00"), committed=Decimal("0.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("100000.00"),
+                    committed=Decimal("0.00"),
+                ),
                 t1_seconds=500,
                 t2_seconds=1000,
                 t3_seconds=1500,
@@ -1698,7 +2005,9 @@ async def test_15_request_info_pause_and_resume() -> None:
                 comment="Please clarify whether support tier is 24/7",
                 idempotency_key=f"{tenant_id}:{req_id}:rinfo_sig",
             )
-            await handle.signal(ProcurementApprovalWorkflow.signal_human_decision, rinfo_sig.model_dump(mode="json"))
+            await handle.signal(
+                ProcurementApprovalWorkflow.signal_human_decision, rinfo_sig.model_dump(mode="json")
+            )
             res = await handle.result()
 
             assert res["status"] == "in_review"
@@ -1714,7 +2023,9 @@ async def test_15_request_info_pause_and_resume() -> None:
 
                 # Reservation remains active
                 res_status = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert res_status == "active"
@@ -1761,7 +2072,13 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
             # Path A: Approval path -> committed
             tenant_A = f"t_res_a_{uuid.uuid4().hex[:6]}"
             req_A = uuid.uuid4()
-            await _seed_test_data(tenant_A, req_A, "usr_a", budget_amt=Decimal("50000.00"), committed_amt=Decimal("5000.00"))
+            await _seed_test_data(
+                tenant_A,
+                req_A,
+                "usr_a",
+                budget_amt=Decimal("50000.00"),
+                committed_amt=Decimal("5000.00"),
+            )
 
             inp_A = ApprovalWorkflowInput(
                 tenant_id=tenant_A,
@@ -1781,12 +2098,39 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_a",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
-                    active_contracts=[ActiveContractSummary(contract_id="c1", title="A", total_value=Decimal("4000.00"), currency="USD", status="active", start_date="2025-01-01", end_date="2026-12-31")],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
+                    active_contracts=[
+                        ActiveContractSummary(
+                            contract_id="c1",
+                            title="A",
+                            total_value=Decimal("4000.00"),
+                            currency="USD",
+                            status="active",
+                            start_date="2025-01-01",
+                            end_date="2026-12-31",
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("50000.00"), committed=Decimal("5000.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("50000.00"),
+                    committed=Decimal("5000.00"),
+                ),
             )
 
             handle_A = await env.client.start_workflow(
@@ -1801,13 +2145,17 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
 
             async with session_factory() as session:
                 res_status_a = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_A, "id": req_A},
                 )
                 assert res_status_a == "committed"
 
                 committed_spend_a = await session.scalar(
-                    text("SELECT committed FROM department_budgets WHERE tenant_id = :t AND department = 'Engineering'"),
+                    text(
+                        "SELECT committed FROM department_budgets WHERE tenant_id = :t AND department = 'Engineering'"
+                    ),
                     {"t": tenant_A},
                 )
                 # 5000 initial + 4000 approved = 9000
@@ -1816,7 +2164,13 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
             # Path B: Hard Reject path -> released
             tenant_B = f"t_res_b_{uuid.uuid4().hex[:6]}"
             req_B = uuid.uuid4()
-            await _seed_test_data(tenant_B, req_B, "usr_b", budget_amt=Decimal("50000.00"), committed_amt=Decimal("5000.00"))
+            await _seed_test_data(
+                tenant_B,
+                req_B,
+                "usr_b",
+                budget_amt=Decimal("50000.00"),
+                committed_amt=Decimal("5000.00"),
+            )
 
             inp_B = ApprovalWorkflowInput(
                 tenant_id=tenant_B,
@@ -1837,11 +2191,28 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_b",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="c", fact="f", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1", source_table="c", fact="f", as_of="2026-11-13"
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("50000.00"), committed=Decimal("5000.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("50000.00"),
+                    committed=Decimal("5000.00"),
+                ),
             )
 
             handle_B = await env.client.start_workflow(
@@ -1856,13 +2227,17 @@ async def test_17_workflow_level_reservation_commit_and_release() -> None:
 
             async with session_factory() as session:
                 res_status_b = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_B, "id": req_B},
                 )
                 assert res_status_b == "released"
 
                 committed_spend_b = await session.scalar(
-                    text("SELECT committed FROM department_budgets WHERE tenant_id = :t AND department = 'Engineering'"),
+                    text(
+                        "SELECT committed FROM department_budgets WHERE tenant_id = :t AND department = 'Engineering'"
+                    ),
                     {"t": tenant_B},
                 )
                 # Headroom restored, committed spend unchanged: 5000
@@ -1918,11 +2293,31 @@ async def test_12_request_info_thread_reply_cycle() -> None:
                 context=ApprovalContextSnapshot(
                     snapshot_hash="h_reqinfo_1",
                     as_of="2026-11-13T00:00:00Z",
-                    citations=[CitationFact(citation_id="c1", source_table="contracts", fact="Active agreement", as_of="2026-11-13")],
-                    security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                    citations=[
+                        CitationFact(
+                            citation_id="c1",
+                            source_table="contracts",
+                            fact="Active agreement",
+                            as_of="2026-11-13",
+                        )
+                    ],
+                    security_reviews=[
+                        SecurityReviewSummary(
+                            doc_type="SOC2",
+                            status="compliant",
+                            audit_period_end="2027-01-01",
+                            is_fresh=True,
+                        )
+                    ],
                 ),
                 policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
-                budget=BudgetSnapshot(department="Engineering", currency="USD", period="FY2026", amount=Decimal("200000.00"), committed=Decimal("0.00")),
+                budget=BudgetSnapshot(
+                    department="Engineering",
+                    currency="USD",
+                    period="FY2026",
+                    amount=Decimal("200000.00"),
+                    committed=Decimal("0.00"),
+                ),
                 t1_seconds=600,
                 t2_seconds=600,
                 t3_seconds=600,
@@ -2005,20 +2400,28 @@ async def test_12_request_info_thread_reply_cycle() -> None:
 
             # 5. Verify audit records for request_info cycle
             async with session_factory() as session:
-                rows = (await session.execute(
-                    text(
-                        "SELECT actor_id, action, reasons, idempotency_key "
-                        "FROM approval_audit_records "
-                        "WHERE tenant_id = :t AND request_id = :id AND action IN ('request_info_sent', 'requester_info_replied', 'human_approve') "
-                        "ORDER BY created_at ASC"
-                    ),
-                    {"t": tenant_id, "id": req_id},
-                )).mappings().all()
+                rows = (
+                    (
+                        await session.execute(
+                            text(
+                                "SELECT actor_id, action, reasons, idempotency_key "
+                                "FROM approval_audit_records "
+                                "WHERE tenant_id = :t AND request_id = :id AND action IN ('request_info_sent', 'requester_info_replied', 'human_approve') "
+                                "ORDER BY created_at ASC"
+                            ),
+                            {"t": tenant_id, "id": req_id},
+                        )
+                    )
+                    .mappings()
+                    .all()
+                )
 
                 assert len(rows) == 3
                 assert rows[0]["action"] == "request_info_sent"
                 assert rows[0]["actor_id"] == approver_id
-                assert "Did vendor provide a 3-year multi-year discount option?" in str(rows[0]["reasons"])
+                assert "Did vendor provide a 3-year multi-year discount option?" in str(
+                    rows[0]["reasons"]
+                )
 
                 assert rows[1]["action"] == "requester_info_replied"
                 assert rows[1]["actor_id"] == requester_id
@@ -2028,14 +2431,21 @@ async def test_12_request_info_thread_reply_cycle() -> None:
                 assert rows[2]["actor_id"] == approver_id
 
                 print("\n[REQUEST_INFO THREAD REPLY CYCLE EVIDENCE]")
-                print(f"  Step 1: {rows[0]['actor_id']} -> {rows[0]['action']}: {rows[0]['reasons']}")
-                print(f"  Step 2: {rows[1]['actor_id']} -> {rows[1]['action']}: {rows[1]['reasons']}")
-                print(f"  Step 3: {rows[2]['actor_id']} -> {rows[2]['action']}: {rows[2]['reasons']}")
+                print(
+                    f"  Step 1: {rows[0]['actor_id']} -> {rows[0]['action']}: {rows[0]['reasons']}"
+                )
+                print(
+                    f"  Step 2: {rows[1]['actor_id']} -> {rows[1]['action']}: {rows[1]['reasons']}"
+                )
+                print(
+                    f"  Step 3: {rows[2]['actor_id']} -> {rows[2]['action']}: {rows[2]['reasons']}"
+                )
 
 
 # =============================================================================
 # E2E TEMPORAL WORKFLOW TESTS: Injection, Sanctions, Security Vulnerability, Production Timers
 # =============================================================================
+
 
 @pytest.mark.asyncio
 async def test_e2e_temporal_prompt_injection_stays_approved() -> None:
@@ -2149,12 +2559,16 @@ async def test_e2e_temporal_prompt_injection_stays_approved() -> None:
                 )
                 assert req_status == "approved"
                 res_state = await session.scalar(
-                    text("SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"),
+                    text(
+                        "SELECT status FROM budget_reservations WHERE tenant_id = :t AND request_id = :id"
+                    ),
                     {"t": tenant_id, "id": req_id},
                 )
                 assert res_state == "committed"
                 print("\n[E2E TEMPORAL PROMPT INJECTION RESILIENCE EVIDENCE]")
-                print(f"  Workflow status: {result['status']}, Budget state: {res_state} (injection safely neutralized)")
+                print(
+                    f"  Workflow status: {result['status']}, Budget state: {res_state} (injection safely neutralized)"
+                )
 
 
 @pytest.mark.asyncio
@@ -2224,7 +2638,9 @@ async def test_e2e_temporal_hard_reject_sanctions() -> None:
                 )
                 assert req_status == "rejected"
                 outbox_evt = await session.scalar(
-                    text("SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                    text(
+                        "SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"
+                    ),
                     {"t": tenant_id, "id": str(req_id)},
                 )
                 assert outbox_evt == "request.rejected"
@@ -2311,7 +2727,9 @@ async def test_e2e_temporal_hard_reject_security_vulnerability() -> None:
                 )
                 assert req_status == "rejected"
                 outbox_evt = await session.scalar(
-                    text("SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"),
+                    text(
+                        "SELECT event_type FROM domain_events_outbox WHERE tenant_id = :t AND aggregate_id = :id"
+                    ),
                     {"t": tenant_id, "id": str(req_id)},
                 )
                 assert outbox_evt == "request.rejected"
@@ -2355,8 +2773,17 @@ async def test_04c_t1_t2_t3_production_intervals_time_skipping() -> None:
             context=ApprovalContextSnapshot(
                 snapshot_hash="h_prod_timer",
                 as_of="2026-11-13T12:00:00Z",
-                citations=[CitationFact(citation_id="c1", source_table="t", fact="f", as_of="2026-11-13")],
-                security_reviews=[SecurityReviewSummary(doc_type="SOC2", status="compliant", audit_period_end="2027-01-01", is_fresh=True)],
+                citations=[
+                    CitationFact(citation_id="c1", source_table="t", fact="f", as_of="2026-11-13")
+                ],
+                security_reviews=[
+                    SecurityReviewSummary(
+                        doc_type="SOC2",
+                        status="compliant",
+                        audit_period_end="2027-01-01",
+                        is_fresh=True,
+                    )
+                ],
             ),
             policy=ApprovalPolicyRules(vp_spend_threshold={"USD": Decimal("50000.00")}),
             budget=BudgetSnapshot(
@@ -2366,7 +2793,7 @@ async def test_04c_t1_t2_t3_production_intervals_time_skipping() -> None:
                 amount=Decimal("100000.00"),
                 committed=Decimal("0.00"),
             ),
-            t1_seconds=86400,   # Exact 24h production T1
+            t1_seconds=86400,  # Exact 24h production T1
             t2_seconds=172800,  # Exact 48h production T2
             t3_seconds=259200,  # Exact 72h production T3
         )
@@ -2395,10 +2822,18 @@ async def test_04c_t1_t2_t3_production_intervals_time_skipping() -> None:
                 )
                 assert req_status == "expired"
 
-                step_row = (await session.execute(
-                    text("SELECT status, t1_reminder_at, t2_escalated_at, t3_expired_at FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'finance_review'"),
-                    {"t": tenant_id, "id": req_id},
-                )).mappings().first()
+                step_row = (
+                    (
+                        await session.execute(
+                            text(
+                                "SELECT status, t1_reminder_at, t2_escalated_at, t3_expired_at FROM approval_steps WHERE tenant_id = :t AND request_id = :id AND step_name = 'finance_review'"
+                            ),
+                            {"t": tenant_id, "id": req_id},
+                        )
+                    )
+                    .mappings()
+                    .first()
+                )
                 assert step_row is not None
                 assert step_row["t1_reminder_at"] is not None
                 assert step_row["t2_escalated_at"] is not None
@@ -2409,6 +2844,9 @@ async def test_04c_t1_t2_t3_production_intervals_time_skipping() -> None:
                 print(f"  T1 (24h) Reminder At : {step_row['t1_reminder_at']}")
                 print(f"  T2 (48h) Escalated At: {step_row['t2_escalated_at']}")
                 print(f"  T3 (72h) Expired At  : {step_row['t3_expired_at']}")
-                print(f"  Workflow Status: {result['status']}, Reservation: {result['reservation_action']}")
-                print(f"  Final Workflow Result: status={result['status']}, reservation={result['reservation_action']}")
-
+                print(
+                    f"  Workflow Status: {result['status']}, Reservation: {result['reservation_action']}"
+                )
+                print(
+                    f"  Final Workflow Result: status={result['status']}, reservation={result['reservation_action']}"
+                )

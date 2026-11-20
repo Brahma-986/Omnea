@@ -5,6 +5,7 @@ description = "Enterprise context engine combining Neo4j graph & pgvector semant
 requires-python = ">=3.11"
 dependencies = [
     "procure-core",
+    "rapidfuzz>=3.0.0",
 ]
 
 [build-system]

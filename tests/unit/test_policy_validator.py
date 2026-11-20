@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+
 import pytest
 from pydantic import ValidationError
 
@@ -28,6 +29,7 @@ def test_policy_validator_missing_finance_threshold_defaults() -> None:
     engine = ApprovalPolicyEngine(rules)
 
     from procure_agents.approval.models import ProcurementIntentSummary
+
     intent_jpy = ProcurementIntentSummary(
         request_id="req_jpy",
         requester_id="usr_tokyo",
@@ -50,6 +52,7 @@ def test_policy_validator_empty_reviewers_or_tags() -> None:
     engine = ApprovalPolicyEngine(rules)
 
     from procure_agents.approval.models import ProcurementIntentSummary
+
     intent = ProcurementIntentSummary(
         request_id="req_empty_tags",
         requester_id="usr_1",
@@ -75,7 +78,11 @@ def test_policy_validator_invalid_over_budget_action() -> None:
 
 def test_consecutive_fast_track_fourth_renewal_cap() -> None:
     """Fast-track renewal counter keyed by (vendor, department, category) caps at 3; 4th renewal requires full review."""
-    from procure_agents.approval.models import ActiveContractSummary, ApprovalContextSnapshot, ProcurementIntentSummary
+    from procure_agents.approval.models import (
+        ActiveContractSummary,
+        ApprovalContextSnapshot,
+        ProcurementIntentSummary,
+    )
 
     rules = ApprovalPolicyRules(allow_fast_track=True, fast_track_consecutive_cap=3)
     engine = ApprovalPolicyEngine(rules)
@@ -112,23 +119,31 @@ def test_consecutive_fast_track_fourth_renewal_cap() -> None:
     approval_record_counters: dict[tuple[str, str, str], int] = {key: 0}
 
     # 1st renewal (consecutive count = 0 -> 1): Eligible
-    ok, msg = engine.evaluate_fast_track(intent, context, consecutive_fast_tracks=approval_record_counters[key])
+    ok, msg = engine.evaluate_fast_track(
+        intent, context, consecutive_fast_tracks=approval_record_counters[key]
+    )
     assert ok is True
     assert msg == "Eligible for fast-track renewal"
     approval_record_counters[key] += 1
 
     # 2nd renewal (consecutive count = 1 -> 2): Eligible
-    ok, msg = engine.evaluate_fast_track(intent, context, consecutive_fast_tracks=approval_record_counters[key])
+    ok, msg = engine.evaluate_fast_track(
+        intent, context, consecutive_fast_tracks=approval_record_counters[key]
+    )
     assert ok is True
     approval_record_counters[key] += 1
 
     # 3rd renewal (consecutive count = 2 -> 3): Eligible
-    ok, msg = engine.evaluate_fast_track(intent, context, consecutive_fast_tracks=approval_record_counters[key])
+    ok, msg = engine.evaluate_fast_track(
+        intent, context, consecutive_fast_tracks=approval_record_counters[key]
+    )
     assert ok is True
     approval_record_counters[key] += 1
 
     # 4th renewal (consecutive count = 3 == cap): BLOCKED, requires full review
     assert approval_record_counters[key] == 3
-    ok, msg = engine.evaluate_fast_track(intent, context, consecutive_fast_tracks=approval_record_counters[key])
+    ok, msg = engine.evaluate_fast_track(
+        intent, context, consecutive_fast_tracks=approval_record_counters[key]
+    )
     assert ok is False
     assert "Consecutive fast-track renewal cap (3) reached; full review required" in msg

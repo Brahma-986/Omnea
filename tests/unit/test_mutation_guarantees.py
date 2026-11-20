@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from decimal import Decimal
+
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
     CitationFact,

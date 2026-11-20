@@ -5,22 +5,18 @@ from __future__ import annotations
 import asyncio
 from datetime import timedelta
 from typing import Any
+
 from temporalio import workflow
-from temporalio.common import RetryPolicy, SearchAttributeKey
+from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
     import procure_agents.approval.fallback as fallback
     from procure_agents.approval.fallback import format_auth_refused_idempotency_key
     from procure_agents.approval.models import ReviewerVerdict
-    from workers.approval.models import (
-        ApprovalWorkflowInput,
-        HumanDecisionSignal,
-        WorkflowExecutionResult,
-    )
     from workers.approval.activities import (
         commit_budget_activity,
-        publish_outbox_event_activity,
         post_slack_notification_activity,
+        publish_outbox_event_activity,
         record_approval_step_activity,
         record_audit_log_activity,
         release_budget_activity,
@@ -28,8 +24,14 @@ with workflow.unsafe.imports_passed_through():
         review_finance_activity,
         review_legal_activity,
         review_security_activity,
+        sync_approved_request_to_erp_activity,
         transition_request_status_activity,
         update_slack_notification_activity,
+    )
+    from workers.approval.models import (
+        ApprovalWorkflowInput,
+        HumanDecisionSignal,
+        WorkflowExecutionResult,
     )
 
 
@@ -139,7 +141,7 @@ class ProcurementApprovalWorkflow:
         self.requester_replies.append(reply_text)
 
     @workflow.signal
-    def signal_cancel(self, actor_id: str, is_admin: bool = False) -> None:
+    def signal_cancel(self, _actor_id: str, _is_admin: bool = False) -> None:
         """Signal requesting cancellation from requester or admin."""
         self.cancelled = True
 
@@ -153,15 +155,22 @@ class ProcurementApprovalWorkflow:
         # Upsert registered search attributes (TenantId, RequestId, ApprovalStatus, Department, EstimatedSpend, VendorId, NeedsHuman)
         try:
             from temporalio.common import SearchAttributeKey
-            workflow.upsert_search_attributes([
-                SearchAttributeKey.for_keyword("TenantId").value_set(tenant_id),
-                SearchAttributeKey.for_keyword("RequestId").value_set(str(req_id)),
-                SearchAttributeKey.for_keyword("ApprovalStatus").value_set("in_review"),
-                SearchAttributeKey.for_keyword("Department").value_set(inp.intent.department),
-                SearchAttributeKey.for_float("EstimatedSpend").value_set(float(inp.intent.estimated_spend)),
-                SearchAttributeKey.for_keyword("VendorId").value_set(str(inp.intent.vendor_id or inp.intent.vendor_name)),
-                SearchAttributeKey.for_bool("NeedsHuman").value_set(False),
-            ])
+
+            workflow.upsert_search_attributes(
+                [
+                    SearchAttributeKey.for_keyword("TenantId").value_set(tenant_id),
+                    SearchAttributeKey.for_keyword("RequestId").value_set(str(req_id)),
+                    SearchAttributeKey.for_keyword("ApprovalStatus").value_set("in_review"),
+                    SearchAttributeKey.for_keyword("Department").value_set(inp.intent.department),
+                    SearchAttributeKey.for_float("EstimatedSpend").value_set(
+                        float(inp.intent.estimated_spend)
+                    ),
+                    SearchAttributeKey.for_keyword("VendorId").value_set(
+                        str(inp.intent.vendor_id or inp.intent.vendor_name)
+                    ),
+                    SearchAttributeKey.for_bool("NeedsHuman").value_set(False),
+                ]
+            )
         except Exception:
             pass
 
@@ -177,7 +186,15 @@ class ProcurementApprovalWorkflow:
             )
             await workflow.execute_activity(
                 record_approval_step_activity,
-                args=[tenant_id, req_id, "entity_resolution", round_num, "human", "needs_human", "procurement_ops"],
+                args=[
+                    tenant_id,
+                    req_id,
+                    "entity_resolution",
+                    round_num,
+                    "human",
+                    "needs_human",
+                    "procurement_ops",
+                ],
                 start_to_close_timeout=timedelta(seconds=15),
             )
             # Wait for signal that entity review resolved, or timeout/cancel
@@ -205,7 +222,7 @@ class ProcurementApprovalWorkflow:
         )
 
         res_key = f"{tenant_id}:{req_id}:reserve:{round_num}"
-        res_info = await workflow.execute_activity(
+        await workflow.execute_activity(
             reserve_budget_activity,
             args=[
                 tenant_id,
@@ -249,12 +266,14 @@ class ProcurementApprovalWorkflow:
         raw_results = await asyncio.gather(f_handle, s_handle, l_handle, return_exceptions=True)
 
         verdicts: dict[str, ReviewerVerdict] = {}
-        for name, res in zip(["finance", "security", "legal"], raw_results):
+        for name, res in zip(["finance", "security", "legal"], raw_results, strict=False):
             if isinstance(res, Exception):
                 verdicts[name] = ReviewerVerdict(
                     reviewer_type=name,
                     verdict="needs_human",
-                    reasons=[f"Fail-closed: Reviewer workflow encountered error: {type(res).__name__}: {str(res)}"],
+                    reasons=[
+                        f"Fail-closed: Reviewer workflow encountered error: {type(res).__name__}: {str(res)}"
+                    ],
                     suggested_assignee=f"{name}_lead",
                 )
             else:
@@ -270,7 +289,11 @@ class ProcurementApprovalWorkflow:
 
         # Record each step and audit row
         for name, v in verdicts.items():
-            step_status = "approved" if v.verdict == "approve" else ("rejected" if v.verdict == "reject" else "needs_human")
+            step_status = (
+                "approved"
+                if v.verdict == "approve"
+                else ("rejected" if v.verdict == "reject" else "needs_human")
+            )
             await workflow.execute_activity(
                 record_approval_step_activity,
                 args=[
@@ -339,7 +362,10 @@ class ProcurementApprovalWorkflow:
                     tenant_id,
                     req_id,
                     "request.rejected",
-                    {"trigger": hard_rejects[0].hard_reject_trigger, "reasons": hard_rejects[0].reasons},
+                    {
+                        "trigger": hard_rejects[0].hard_reject_trigger,
+                        "reasons": hard_rejects[0].reasons,
+                    },
                     outbox_key,
                 ],
                 start_to_close_timeout=timedelta(seconds=15),
@@ -418,7 +444,9 @@ class ProcurementApprovalWorkflow:
                 wait_timeout = (
                     t1_duration
                     if not t1_fired
-                    else (t2_duration - t1_duration if not t2_fired else (t3_duration - t2_duration))
+                    else (
+                        t2_duration - t1_duration if not t2_fired else (t3_duration - t2_duration)
+                    )
                 )
                 timed_out = False
                 try:
@@ -426,7 +454,7 @@ class ProcurementApprovalWorkflow:
                         lambda: len(self.human_decisions) > 0 or self.cancelled,
                         timeout=wait_timeout,
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     timed_out = True
 
                 if self.cancelled:
@@ -463,7 +491,9 @@ class ProcurementApprovalWorkflow:
                             "human",
                             "duplicate_signal_ignored",
                             None,
-                            ["Duplicate human signal received with existing idempotency key; ignored"],
+                            [
+                                "Duplicate human signal received with existing idempotency key; ignored"
+                            ],
                             [],
                             None,
                             None,
@@ -478,10 +508,16 @@ class ProcurementApprovalWorkflow:
                 while self.human_decisions:
                     # Process human decision
                     hd = self.human_decisions.pop(0)
-                    assigned_approver = verdicts.get(hd.step_name.replace("_review", ""), ReviewerVerdict(reviewer_type="finance", verdict="needs_human")).suggested_assignee or "cfo_or_delegate"
+                    assigned_approver = (
+                        verdicts.get(
+                            hd.step_name.replace("_review", ""),
+                            ReviewerVerdict(reviewer_type="finance", verdict="needs_human"),
+                        ).suggested_assignee
+                        or "cfo_or_delegate"
+                    )
 
                     # Backup Approver Guard: Backup approver is only authorized AFTER T2 escalation fires
-                    is_backup = (hd.actor_id == "backup_approver")
+                    is_backup = hd.actor_id == "backup_approver"
                     if is_backup and not t2_fired:
                         audit_403_key = format_auth_refused_idempotency_key(
                             tenant_id, req_id, hd.actor_id, hd.step_name, hd.action, round_num
@@ -511,7 +547,9 @@ class ProcurementApprovalWorkflow:
                         continue
 
                     # Verify authorization
-                    if not (is_backup and t2_fired) and not fallback.authorize_approver(hd.actor_id, inp.requester_id, assigned_approver):
+                    if not (is_backup and t2_fired) and not fallback.authorize_approver(
+                        hd.actor_id, inp.requester_id, assigned_approver
+                    ):
                         # 403 Refusal -> log audit record and keep waiting
                         audit_403_key = format_auth_refused_idempotency_key(
                             tenant_id, req_id, hd.actor_id, hd.step_name, hd.action, round_num
@@ -542,7 +580,9 @@ class ProcurementApprovalWorkflow:
 
                     # Authorized Human Decision
                     human_audit_key = f"{tenant_id}:{req_id}:{hd.step_name}:human:{hd.actor_id}:{hd.action}:{round_num}"
-                    human_verdict_str = hd.action if hd.action in ("approve", "reject", "needs_human") else None
+                    human_verdict_str = (
+                        hd.action if hd.action in ("approve", "reject", "needs_human") else None
+                    )
                     await workflow.execute_activity(
                         record_audit_log_activity,
                         args=[
@@ -578,10 +618,34 @@ class ProcurementApprovalWorkflow:
                             args=[tenant_id, req_id, "approved"],
                             start_to_close_timeout=timedelta(seconds=15),
                         )
-                        outbox_key = f"sim_outbox_crash_{tenant_id}:{req_id}:outbox:approved:{round_num}" if inp.fault_injection.get("simulate_outbox_crash") else f"{tenant_id}:{req_id}:outbox:approved:{round_num}"
+                        # Execute ERP Saga to create PO in Ledger ERP
+                        await workflow.execute_activity(
+                            sync_approved_request_to_erp_activity,
+                            args=[
+                                tenant_id,
+                                req_id,
+                                inp.intent.vendor_name,
+                                str(inp.intent.estimated_spend),
+                                inp.intent.currency,
+                                inp.intent.department,
+                                inp.fault_injection.get("erp_fault_point"),
+                            ],
+                            start_to_close_timeout=timedelta(seconds=20),
+                        )
+                        outbox_key = (
+                            f"sim_outbox_crash_{tenant_id}:{req_id}:outbox:approved:{round_num}"
+                            if inp.fault_injection.get("simulate_outbox_crash")
+                            else f"{tenant_id}:{req_id}:outbox:approved:{round_num}"
+                        )
                         await workflow.execute_activity(
                             publish_outbox_event_activity,
-                            args=[tenant_id, req_id, "request.approved", {"approved_by": hd.actor_id}, outbox_key],
+                            args=[
+                                tenant_id,
+                                req_id,
+                                "request.approved",
+                                {"approved_by": hd.actor_id},
+                                outbox_key,
+                            ],
                             start_to_close_timeout=timedelta(seconds=15),
                         )
                         return WorkflowExecutionResult(
@@ -607,7 +671,13 @@ class ProcurementApprovalWorkflow:
                         outbox_key = f"{tenant_id}:{req_id}:outbox:rejected:{round_num}"
                         await workflow.execute_activity(
                             publish_outbox_event_activity,
-                            args=[tenant_id, req_id, "request.rejected", {"rejected_by": hd.actor_id}, outbox_key],
+                            args=[
+                                tenant_id,
+                                req_id,
+                                "request.rejected",
+                                {"rejected_by": hd.actor_id},
+                                outbox_key,
+                            ],
                             start_to_close_timeout=timedelta(seconds=15),
                         )
                         return WorkflowExecutionResult(
@@ -697,7 +767,23 @@ class ProcurementApprovalWorkflow:
                         for name in needs_human_steps:
                             await workflow.execute_activity(
                                 record_approval_step_activity,
-                                args=[tenant_id, req_id, f"{name}_review", round_num, "agent", "awaiting_human", None, None, self.slack_message_ts, True, False, False, None, None, fired_at_iso],
+                                args=[
+                                    tenant_id,
+                                    req_id,
+                                    f"{name}_review",
+                                    round_num,
+                                    "agent",
+                                    "awaiting_human",
+                                    None,
+                                    None,
+                                    self.slack_message_ts,
+                                    True,
+                                    False,
+                                    False,
+                                    None,
+                                    None,
+                                    fired_at_iso,
+                                ],
                                 start_to_close_timeout=timedelta(seconds=15),
                             )
                     elif not t2_fired:
@@ -705,7 +791,23 @@ class ProcurementApprovalWorkflow:
                         for name in needs_human_steps:
                             await workflow.execute_activity(
                                 record_approval_step_activity,
-                                args=[tenant_id, req_id, f"{name}_review", round_num, "agent", "awaiting_human", None, "backup_approver", self.slack_message_ts, False, True, False, None, None, fired_at_iso],
+                                args=[
+                                    tenant_id,
+                                    req_id,
+                                    f"{name}_review",
+                                    round_num,
+                                    "agent",
+                                    "awaiting_human",
+                                    None,
+                                    "backup_approver",
+                                    self.slack_message_ts,
+                                    False,
+                                    True,
+                                    False,
+                                    None,
+                                    None,
+                                    fired_at_iso,
+                                ],
                                 start_to_close_timeout=timedelta(seconds=15),
                             )
                     else:
@@ -746,7 +848,12 @@ class ProcurementApprovalWorkflow:
                         if self.slack_message_ts:
                             await workflow.execute_activity(
                                 update_slack_notification_activity,
-                                args=[tenant_id, req_id, self.slack_message_ts, "Request expired due to T3 approval timeout."],
+                                args=[
+                                    tenant_id,
+                                    req_id,
+                                    self.slack_message_ts,
+                                    "Request expired due to T3 approval timeout.",
+                                ],
                                 start_to_close_timeout=timedelta(seconds=15),
                             )
                         return WorkflowExecutionResult(
@@ -770,6 +877,20 @@ class ProcurementApprovalWorkflow:
             transition_request_status_activity,
             args=[tenant_id, req_id, "approved"],
             start_to_close_timeout=timedelta(seconds=15),
+        )
+        # Execute ERP Saga to create PO in Ledger ERP
+        await workflow.execute_activity(
+            sync_approved_request_to_erp_activity,
+            args=[
+                tenant_id,
+                req_id,
+                inp.intent.vendor_name,
+                str(inp.intent.estimated_spend),
+                inp.intent.currency,
+                inp.intent.department,
+                inp.fault_injection.get("erp_fault_point"),
+            ],
+            start_to_close_timeout=timedelta(seconds=20),
         )
         outbox_key = f"{tenant_id}:{req_id}:outbox:approved:{round_num}"
         await workflow.execute_activity(

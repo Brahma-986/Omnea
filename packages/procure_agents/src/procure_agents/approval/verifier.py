@@ -8,8 +8,6 @@ Enforces:
 
 from __future__ import annotations
 
-from typing import Tuple
-
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
     ReviewerVerdict,
@@ -74,7 +72,11 @@ class CitationVerifier:
                     )
 
         # Monotonic degradation on rule evidence failure
-        degraded_verdict = ("needs_human" if verdict.verdict == "approve" else verdict.verdict) if rule_failed else verdict.verdict
+        degraded_verdict = (
+            ("needs_human" if verdict.verdict == "approve" else verdict.verdict)
+            if rule_failed
+            else verdict.verdict
+        )
         discarded_explanation = verdict.explanation_discarded or explainer_failed
         final_explanation = None if discarded_explanation else verdict.explanation
 

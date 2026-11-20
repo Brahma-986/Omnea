@@ -1,0 +1,67 @@
+appId: ai.omnea.procure
+productName: Omnea ProcureOS
+copyright: "Copyright © 2026 Omnea Inc."
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - src/**/*
+  - assets/**/*
+  - package.json
+
+protocols:
+  - name: Omnea Procure Link
+    schemes:
+      - procure
+    role: Editor
+
+win:
+  target:
+    - nsis
+    - portable
+  icon: assets/icon.png
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Omnea ProcureOS
+
+mac:
+  target:
+    - dmg
+    - zip
+  icon: assets/icon.png
+  category: public.app-category.business
+  hardenedRuntime: true
+  gatekeeperAssess: false
+
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: assets/icon.png
+  category: Office
+  synopsis: Omnea AI-Native Procurement Operating System
+  description: Enterprise desktop client for Omnea AI-native procurement, approvals, and live alerts.
+  desktop:
+    StartupWMClass: omnea-procure-desktop
+    MimeType: x-scheme-handler/procure;
+
+publish:
+  provider: github
+  owner: omnea
+  repo: procure-os

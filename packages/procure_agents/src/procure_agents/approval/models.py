@@ -5,10 +5,8 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, Literal
-from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
-
 
 HARD_REJECT_TRIGGERS: tuple[str, ...] = (
     "hard_reject_sanctions",
@@ -47,9 +45,7 @@ class ApprovalPolicyRules(BaseModel):
         default_factory=lambda: ["pii_access", "production_credentials", "regulated_data"]
     )
     over_budget_action: Literal["needs_human", "auto_reject"] = "needs_human"
-    hard_reject_triggers: list[str] = Field(
-        default_factory=lambda: list(HARD_REJECT_TRIGGERS)
-    )
+    hard_reject_triggers: list[str] = Field(default_factory=lambda: list(HARD_REJECT_TRIGGERS))
 
 
 class BudgetSnapshot(BaseModel):
@@ -91,6 +87,10 @@ class SecurityReviewSummary(BaseModel):
     is_fresh: bool = True
     critical_vulnerabilities_unresolved: int = 0
     remediation_deadline_passed: bool = False
+    is_scanned: bool = True
+    has_verified_quotes: bool = True
+    missing_domains: list[str] = Field(default_factory=list)
+    quarantined: bool = False
 
 
 class ApprovalContextSnapshot(BaseModel):

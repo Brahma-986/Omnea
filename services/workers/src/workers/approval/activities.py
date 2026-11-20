@@ -12,7 +12,6 @@ from typing import Any
 from sqlalchemy import text
 from temporalio import activity
 
-from procure_agents.approval.fallback import format_auth_refused_idempotency_key
 from procure_agents.approval.idempotency import check_idempotency_seen
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
@@ -48,7 +47,9 @@ async def review_finance_activity(
         budget = BudgetSnapshot.model_validate(budget_dict) if budget_dict else None
 
         reviewer = FinanceReviewer(policy)
-        verdict = reviewer.review(intent, context, budget, requester_is_approver=requester_is_approver)
+        verdict = reviewer.review(
+            intent, context, budget, requester_is_approver=requester_is_approver
+        )
         return verdict.model_dump()
     except Exception as exc:
         return ReviewerVerdict(
@@ -131,7 +132,9 @@ async def transition_request_status_activity(
         async with session.begin():
             # Check current status
             curr_status = await session.scalar(
-                text("SELECT status FROM requests WHERE tenant_id = :tenant_id AND id = :id FOR UPDATE"),
+                text(
+                    "SELECT status FROM requests WHERE tenant_id = :tenant_id AND id = :id FOR UPDATE"
+                ),
                 {"tenant_id": tenant_id, "id": req_uuid},
             )
             if curr_status == target_status:
@@ -186,12 +189,20 @@ async def reserve_budget_activity(
                         "WHERE tenant_id = :tenant_id AND department = :dept AND currency = :curr AND period = :period "
                         "FOR UPDATE"
                     ),
-                    {"tenant_id": tenant_id, "dept": department, "curr": currency, "period": period},
+                    {
+                        "tenant_id": tenant_id,
+                        "dept": department,
+                        "curr": currency,
+                        "period": period,
+                    },
                 )
             ).fetchone()
 
             if not budget_row:
-                return {"reserved": False, "reason": f"No budget row found for {department} ({currency})"}
+                return {
+                    "reserved": False,
+                    "reason": f"No budget row found for {department} ({currency})",
+                }
 
             bgt_id, bgt_amount, bgt_committed = budget_row
             active_reserved = await session.scalar(
@@ -284,7 +295,13 @@ async def commit_budget_activity(
                     "SET committed = committed + :amount "
                     "WHERE tenant_id = :tenant_id AND department = :dept AND currency = :curr AND period = :period"
                 ),
-                {"amount": amount, "tenant_id": tenant_id, "dept": dept, "curr": curr, "period": period},
+                {
+                    "amount": amount,
+                    "tenant_id": tenant_id,
+                    "dept": dept,
+                    "curr": curr,
+                    "period": period,
+                },
             )
             return True
 
@@ -353,7 +370,12 @@ async def record_approval_step_activity(
                         "WHERE tenant_id = :tenant_id AND request_id = :req_id AND step_name = :step AND round = :round "
                         "FOR UPDATE"
                     ),
-                    {"tenant_id": tenant_id, "req_id": req_uuid, "step": step_name, "round": round_num},
+                    {
+                        "tenant_id": tenant_id,
+                        "req_id": req_uuid,
+                        "step": step_name,
+                        "round": round_num,
+                    },
                 )
             ).fetchone()
 
@@ -386,8 +408,12 @@ async def record_approval_step_activity(
                         "t1_reminder": t1_reminder,
                         "t2_escalated": t2_escalated,
                         "t3_expired": t3_expired,
-                        "agent_verdict": json.dumps(agent_verdict_dict) if agent_verdict_dict else None,
-                        "human_verdict": json.dumps(human_verdict_dict) if human_verdict_dict else None,
+                        "agent_verdict": json.dumps(agent_verdict_dict)
+                        if agent_verdict_dict
+                        else None,
+                        "human_verdict": json.dumps(human_verdict_dict)
+                        if human_verdict_dict
+                        else None,
                         "fired_at": fired_dt,
                     },
                 )
@@ -423,8 +449,12 @@ async def record_approval_step_activity(
                         "t1_reminder": t1_reminder,
                         "t2_escalated": t2_escalated,
                         "t3_expired": t3_expired,
-                        "agent_verdict": json.dumps(agent_verdict_dict) if agent_verdict_dict else None,
-                        "human_verdict": json.dumps(human_verdict_dict) if human_verdict_dict else None,
+                        "agent_verdict": json.dumps(agent_verdict_dict)
+                        if agent_verdict_dict
+                        else None,
+                        "human_verdict": json.dumps(human_verdict_dict)
+                        if human_verdict_dict
+                        else None,
                         "fired_at": fired_dt,
                     },
                 )
@@ -450,13 +480,16 @@ async def record_audit_log_activity(
     idempotency_key: str,
 ) -> bool:
     """Insert immutable audit record into approval_audit_records with strict idempotency."""
+    _ = (step_name, round_num)
     req_uuid = uuid.UUID(request_id_str)
     session_factory = get_async_session_factory()
 
     async with session_factory() as session:
         async with session.begin():
             # Check if idempotency key already exists via application guard
-            if await check_idempotency_seen(session, tenant_id, idempotency_key, "approval_audit_records"):
+            if await check_idempotency_seen(
+                session, tenant_id, idempotency_key, "approval_audit_records"
+            ):
                 # Idempotent replay: already recorded
                 return True
 
@@ -507,7 +540,9 @@ async def publish_outbox_event_activity(
 
     async with session_factory() as session:
         async with session.begin():
-            if await check_idempotency_seen(session, tenant_id, idempotency_key, "domain_events_outbox"):
+            if await check_idempotency_seen(
+                session, tenant_id, idempotency_key, "domain_events_outbox"
+            ):
                 return True
 
             event_id = uuid.uuid4()
@@ -530,8 +565,14 @@ async def publish_outbox_event_activity(
             )
 
         # Test Fault Injection: simulate worker crash AFTER outbox row is committed, before activity return
-        if _fault_injection_enabled() and idempotency_key.startswith("sim_outbox_crash_") and activity.info().attempt == 1:
-            raise RuntimeError("Injected failure: worker crashed immediately after outbox insert, before activity return")
+        if (
+            _fault_injection_enabled()
+            and idempotency_key.startswith("sim_outbox_crash_")
+            and activity.info().attempt == 1
+        ):
+            raise RuntimeError(
+                "Injected failure: worker crashed immediately after outbox insert, before activity return"
+            )
         return True
 
 
@@ -570,7 +611,16 @@ async def post_slack_notification_activity(
 
     # 2. Write pending-intent row BEFORE posting to external API (ensures durability across process crashes)
     import hashlib
-    ts_hash = int(hashlib.sha256(f"{tenant_id}:{request_id_str}:{step_name}:{idempotency_key}".encode("utf-8")).hexdigest()[:8], 16) % 1000000
+
+    ts_hash = (
+        int(
+            hashlib.sha256(
+                f"{tenant_id}:{request_id_str}:{step_name}:{idempotency_key}".encode()
+            ).hexdigest()[:8],
+            16,
+        )
+        % 1000000
+    )
     pending_ts = f"1710000000.{ts_hash:06d}"
 
     async with session_factory() as session:
@@ -582,7 +632,13 @@ async def post_slack_notification_activity(
                     "ON CONFLICT (tenant_id, request_id, step_name, round) DO UPDATE "
                     "SET slack_message_ts = COALESCE(approval_steps.slack_message_ts, EXCLUDED.slack_message_ts)"
                 ),
-                {"id": uuid.uuid4(), "t": tenant_id, "r": req_uuid, "s": step_name, "ts": pending_ts},
+                {
+                    "id": uuid.uuid4(),
+                    "t": tenant_id,
+                    "r": req_uuid,
+                    "s": step_name,
+                    "ts": pending_ts,
+                },
             )
 
     msg_key = f"{tenant_id}:{request_id_str}:{step_name}"
@@ -593,11 +649,21 @@ async def post_slack_notification_activity(
     }
 
     # Test Fault Injection: simulate crash AFTER external Slack post succeeds, before DB persistence
-    if _fault_injection_enabled() and idempotency_key.startswith("sim_post_crash_") and activity.info().attempt == 1:
-        raise RuntimeError("Injected failure: worker crashed immediately after fake Slack call, before DB persistence")
+    if (
+        _fault_injection_enabled()
+        and idempotency_key.startswith("sim_post_crash_")
+        and activity.info().attempt == 1
+    ):
+        raise RuntimeError(
+            "Injected failure: worker crashed immediately after fake Slack call, before DB persistence"
+        )
 
     # Simulate worker crash mid-flow before Slack post succeeds if requested
-    if _fault_injection_enabled() and idempotency_key.startswith("sim_crash_") and activity.info().attempt == 1:
+    if (
+        _fault_injection_enabled()
+        and idempotency_key.startswith("sim_crash_")
+        and activity.info().attempt == 1
+    ):
         raise RuntimeError("Simulated worker process crash mid-flow before Slack post")
 
     return pending_ts
@@ -611,9 +677,49 @@ async def update_slack_notification_activity(
     updated_text: str,
 ) -> bool:
     """Update existing Slack message in place."""
-    for key, data in _MOCK_SLACK_MESSAGES.items():
+    _ = (tenant_id, request_id_str)
+    for _key, data in _MOCK_SLACK_MESSAGES.items():
         if data["ts"] == slack_ts:
             data["text"] = updated_text
             data["updated"] = True
             return True
     return False
+
+
+@activity.defn(name="sync_approved_request_to_erp")
+async def sync_approved_request_to_erp_activity(
+    tenant_id: str,
+    request_id_str: str,
+    vendor_name: str,
+    amount_str: str,
+    currency: str,
+    department: str = "Engineering",
+    fault_injection_point: str | None = None,
+) -> dict[str, Any]:
+    """Execute the idempotent ERP sync saga upon final request approval."""
+    from decimal import Decimal
+
+    from procure_core.erp.factory import get_erp_connector
+    from procure_core.erp.saga import ErpSyncSaga
+
+    session_factory = get_async_session_factory()
+    async with session_factory() as session:
+        async with session.begin():
+            connector = await get_erp_connector(session, tenant_id)
+            saga = ErpSyncSaga(connector=connector, tenant_id=tenant_id)
+            res = await saga.execute(
+                session=session,
+                request_id=request_id_str,
+                vendor_name=vendor_name,
+                amount=Decimal(amount_str),
+                currency=currency,
+                department=department,
+                fault_injection_point=fault_injection_point,
+            )
+            return {
+                "success": res.success,
+                "saga_id": res.saga_id,
+                "po_number": res.po_number,
+                "status": res.status,
+                "steps_executed": res.steps_executed,
+            }

@@ -75,7 +75,10 @@ async def test_review_api_tenant_authorization_guard(
     await db_session.commit()
 
     # User from Tenant A attempts to resolve Tenant B's task -> 403 Forbidden!
-    auth_header_a = {"Authorization": f"Bearer reviewer_a@{tenant_a}.ai:{tenant_a}"}
+    auth_header_a = {
+        "Authorization": f"Bearer reviewer_a@{tenant_a}.ai:{tenant_a}",
+        "X-CSRF-Token": "test-csrf",
+    }
     resp = await async_client.post(
         f"/api/v1/reviews/tasks/{task_b.id}/resolve",
         headers=auth_header_a,
@@ -139,6 +142,7 @@ async def test_review_api_resolve_populates_resolved_by_from_auth(
     headers = {
         "Authorization": f"Bearer {actor_email}:{tenant}",
         "x-tenant-id": tenant,
+        "X-CSRF-Token": "test-csrf",
     }
 
     # 1. List tasks

@@ -10,14 +10,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from collections import defaultdict
+
 from tests.eval.test_approval_golden_eval import evaluate_case
 
 
 def main() -> None:
-    with open("tests/eval/approval_cases.jsonl", "r", encoding="utf-8") as f:
+    with open("tests/eval/approval_cases.jsonl", encoding="utf-8") as f:
         cases = [json.loads(line) for line in f]
 
-    matrix: dict[str, dict[str, int]] = defaultdict(lambda: {"approved": 0, "awaiting_human": 0, "rejected": 0, "total": 0})
+    matrix: dict[str, dict[str, int]] = defaultdict(
+        lambda: {"approved": 0, "awaiting_human": 0, "rejected": 0, "total": 0}
+    )
     expected_matches = 0
     approved_total = 0
     autonomous_total = 0
@@ -77,21 +80,30 @@ def main() -> None:
     print(f"Total Cases Evaluated        : {total_all} (Rows sum to 91: {total_all == 91})")
     print(f"Total Approved Cases         : {total_app} (Matches 34: {total_app == 34})")
     print(f"  - Autonomous Approvals     : {autonomous_total} (Clear autonomous rule approvals)")
-    print(f"  - Human Interactive Clicks : 1 (case_slack_valid_interactive_approval)")
+    print("  - Human Interactive Clicks : 1 (case_slack_valid_interactive_approval)")
     print(f"Total Awaiting Human Cases   : {total_nh} (Matches 52: {total_nh == 52})")
     print(f"Total Rejected Smoke Cases   : {total_rej} (Matches 5: {total_rej == 5})")
-    print(f"Overall Accuracy             : {expected_matches}/{total_all} ({expected_matches / total_all * 100:.2f}%)")
+    print(
+        f"Overall Accuracy             : {expected_matches}/{total_all} ({expected_matches / total_all * 100:.2f}%)"
+    )
     print()
     print("FALSE APPROVAL METRICS:")
-    print(f"  False Approvals on Escalation Denominator (52 cases) : {false_approvals_escalations}/52 (0.00%)")
+    print(
+        f"  False Approvals on Escalation Denominator (52 cases) : {false_approvals_escalations}/52 (0.00%)"
+    )
     # Wilson 95% upper bound for 0/52
     import math
+
     z = 1.96
     n = 52
     bound_52 = (z * z / (2 * n) + z * math.sqrt(z * z / (4 * n * n))) / (1 + z * z / n)
-    print(f"  Wilson 95% Upper Bound (52 cases)                    : {bound_52 * 100:.2f}% (~6.88%)")
-    print(f"  False Approvals on Hard Reject Smoke (5 cases)       : {false_approvals_smoke}/5 (0.00%)")
-    print(f"  Total False Approvals across all 57 non-approvals    : 0/57 (0.00%)")
+    print(
+        f"  Wilson 95% Upper Bound (52 cases)                    : {bound_52 * 100:.2f}% (~6.88%)"
+    )
+    print(
+        f"  False Approvals on Hard Reject Smoke (5 cases)       : {false_approvals_smoke}/5 (0.00%)"
+    )
+    print("  Total False Approvals across all 57 non-approvals    : 0/57 (0.00%)")
 
 
 if __name__ == "__main__":

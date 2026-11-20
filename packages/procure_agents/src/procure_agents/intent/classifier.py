@@ -19,6 +19,11 @@ class IntentClassifier:
         self.llm = llm_client or ResilientLLMClient()
         self.system_prompt = load_classify_prompt()
 
+    @property
+    def last_response_id(self) -> str | None:
+        """Expose the LLM provider response ID from the underlying client."""
+        return getattr(self.llm, "last_response_id", None)
+
     async def classify(self, text: str) -> IntentClassification:
         """Classify message text into one of 5 categories."""
         result: IntentClassification = await self.llm.call_structured(

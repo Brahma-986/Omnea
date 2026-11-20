@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import uuid
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from procure_agents.approval.fallback import authorize_approver
-from procure_agents.approval.idempotency import DuplicateIdempotencyKeyError, enforce_idempotency_key
+from procure_agents.approval.idempotency import (
+    DuplicateIdempotencyKeyError,
+    enforce_idempotency_key,
+)
 from procure_agents.approval.models import (
     ApprovalContextSnapshot,
     CitationFact,
@@ -35,7 +39,9 @@ def test_assigned_approver_auth_mutant_fails(monkeypatch: pytest.MonkeyPatch) ->
     # Monkeypatch the real authorize_approver function to simulate mutated bypass
     import procure_agents.approval.fallback as fb
 
-    def mutated_authorize_approver(actor_id: str, requester_id: str, assigned_approver_id: str, is_admin: bool = False) -> bool:
+    def mutated_authorize_approver(
+        actor_id: str, requester_id: str, assigned_approver_id: str, is_admin: bool = False
+    ) -> bool:
         return True  # Mutation: Bypasses check and authorizes self-approval!
 
     monkeypatch.setattr(fb, "authorize_approver", mutated_authorize_approver)
@@ -54,6 +60,7 @@ async def test_real_application_idempotency_guard(
 ) -> None:
     """Real production code: Duplicate idempotency key raises DuplicateIdempotencyKeyError."""
     from sqlalchemy import text
+
     tenant_id = f"t_idem_{uuid.uuid4().hex[:8]}"
     req_id = uuid.uuid4()
     idem_key = "idem_key_real_1"
@@ -88,8 +95,9 @@ async def test_application_idempotency_mutant_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Mutant: Disable the application idempotency check to prove named test fails."""
-    import procure_agents.approval.idempotency as idem_mod
     from sqlalchemy import text
+
+    import procure_agents.approval.idempotency as idem_mod
 
     tenant_id = f"t_idem_{uuid.uuid4().hex[:8]}"
     req_id = uuid.uuid4()
@@ -113,7 +121,9 @@ async def test_application_idempotency_mutant_fails(
     await db_session.flush()
 
     # Mutate guard to no-op
-    async def mutated_enforce_idempotency(session: AsyncSession, tenant_id: str, key: str, table_name: str = "budget_reservations") -> None:
+    async def mutated_enforce_idempotency(
+        session: AsyncSession, tenant_id: str, key: str, table_name: str = "budget_reservations"
+    ) -> None:
         return None  # Mutation: Bypasses check without raising!
 
     monkeypatch.setattr(idem_mod, "enforce_idempotency_key", mutated_enforce_idempotency)
@@ -126,7 +136,9 @@ async def test_application_idempotency_mutant_fails(
         except DuplicateIdempotencyKeyError:
             pass
         else:
-            raise AssertionError("MUTANT DETECTED: enforce_idempotency_key failed to raise on duplicate key!")
+            raise AssertionError(
+                "MUTANT DETECTED: enforce_idempotency_key failed to raise on duplicate key!"
+            )
 
 
 # =============================================================================
@@ -137,9 +149,15 @@ def test_real_citation_verifier_guard() -> None:
     context = ApprovalContextSnapshot(
         snapshot_hash="h1",
         as_of="2026-11-13T12:00:00Z",
-        citations=[CitationFact(citation_id="cite_valid", source_table="c", fact="f", as_of="2026-11-13T12:00:00Z")],
+        citations=[
+            CitationFact(
+                citation_id="cite_valid", source_table="c", fact="f", as_of="2026-11-13T12:00:00Z"
+            )
+        ],
     )
-    verdict = ReviewerVerdict(reviewer_type="security", verdict="approve", evidence_ids=["cite_FABRICATED"])
+    verdict = ReviewerVerdict(
+        reviewer_type="security", verdict="approve", evidence_ids=["cite_FABRICATED"]
+    )
     res = CitationVerifier.verify_verdict(verdict, context)
     assert res.verdict == "needs_human"
 
@@ -151,9 +169,15 @@ def test_citation_verifier_mutant_fails(monkeypatch: pytest.MonkeyPatch) -> None
     context = ApprovalContextSnapshot(
         snapshot_hash="h1",
         as_of="2026-11-13T12:00:00Z",
-        citations=[CitationFact(citation_id="cite_valid", source_table="c", fact="f", as_of="2026-11-13T12:00:00Z")],
+        citations=[
+            CitationFact(
+                citation_id="cite_valid", source_table="c", fact="f", as_of="2026-11-13T12:00:00Z"
+            )
+        ],
     )
-    fabricated_verdict = ReviewerVerdict(reviewer_type="security", verdict="approve", evidence_ids=["cite_FABRICATED"])
+    fabricated_verdict = ReviewerVerdict(
+        reviewer_type="security", verdict="approve", evidence_ids=["cite_FABRICATED"]
+    )
 
     # Mutate verify_verdict to return verdict ungrounded
     def mutated_verify(v: ReviewerVerdict, c: ApprovalContextSnapshot) -> ReviewerVerdict:
@@ -174,6 +198,7 @@ def test_citation_verifier_mutant_fails(monkeypatch: pytest.MonkeyPatch) -> None
 async def test_slack_action_handler_authorizes_approver() -> None:
     """Slack handler invokes authorize_approver; unauthorized actor is refused with 403."""
     import json
+
     from workers.approval.slack_interactions import handle_slack_action
 
     payload = {
@@ -181,14 +206,16 @@ async def test_slack_action_handler_authorizes_approver() -> None:
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": f"t_slk_{uuid.uuid4().hex[:6]}",
-                    "request_id": str(uuid.uuid4()),
-                    "requester_id": "requester_alice",
-                    "assigned_approver_id": "cfo_bob",
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": f"t_slk_{uuid.uuid4().hex[:6]}",
+                        "request_id": str(uuid.uuid4()),
+                        "requester_id": "requester_alice",
+                        "assigned_approver_id": "cfo_bob",
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -201,9 +228,12 @@ async def test_slack_action_handler_authorizes_approver() -> None:
 async def test_slack_action_handler_mutant_fails(monkeypatch: pytest.MonkeyPatch) -> None:
     """Mutant: Disable authorize_approver in Slack handler; handler fails to refuse self-approval."""
     import json
+
     import workers.approval.slack_interactions as slack_mod
 
-    def mutated_authorize(actor_id: str, requester_id: str, assigned_approver_id: str, is_admin: bool = False) -> bool:
+    def mutated_authorize(
+        actor_id: str, requester_id: str, assigned_approver_id: str, is_admin: bool = False
+    ) -> bool:
         return True  # Mutation: Bypasses check and authorizes self-approval!
 
     monkeypatch.setattr(slack_mod, "authorize_approver", mutated_authorize)
@@ -213,14 +243,16 @@ async def test_slack_action_handler_mutant_fails(monkeypatch: pytest.MonkeyPatch
         "actions": [
             {
                 "action_id": "approve",
-                "value": json.dumps({
-                    "tenant_id": f"t_slk_{uuid.uuid4().hex[:6]}",
-                    "request_id": str(uuid.uuid4()),
-                    "requester_id": "requester_alice",
-                    "assigned_approver_id": "cfo_bob",
-                    "step_name": "finance_review",
-                    "round": 1,
-                }),
+                "value": json.dumps(
+                    {
+                        "tenant_id": f"t_slk_{uuid.uuid4().hex[:6]}",
+                        "request_id": str(uuid.uuid4()),
+                        "requester_id": "requester_alice",
+                        "assigned_approver_id": "cfo_bob",
+                        "step_name": "finance_review",
+                        "round": 1,
+                    }
+                ),
             }
         ],
     }
@@ -228,4 +260,3 @@ async def test_slack_action_handler_mutant_fails(monkeypatch: pytest.MonkeyPatch
     with pytest.raises(AssertionError):
         res = await slack_mod.handle_slack_action(payload)
         assert res["code"] == 403
-
