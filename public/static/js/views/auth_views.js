@@ -141,12 +141,12 @@ export function renderLogin(container) {
           </div>
 
           <div class="form-group">
-            <label class="form-label form-label-required" for="login-password">
-              <span>Password</span>
-              <a href="#/forgot-password" class="btn-link" style="font-size: var(--text-xs);">Forgot?</a>
-            </label>
+            <label class="form-label form-label-required" for="login-password">Password</label>
             <input type="password" id="login-password" class="form-input" placeholder="••••••••••••" required>
             <div class="form-error" id="login-password-error" style="display: none;"></div>
+            <div style="display: flex; justify-content: flex-end; margin-top: var(--space-2);">
+              <a href="#/forgot-password" class="btn-link" style="font-size: var(--text-xs);">Forgot password?</a>
+            </div>
           </div>
 
           <div class="form-group" id="totp-group" style="display: none;">
