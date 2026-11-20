@@ -166,10 +166,22 @@
   justify-content: space-between;
 }
 
+.form-label-required {
+  justify-content: flex-start;
+}
+
 .form-label-required::after {
   content: "*";
   color: var(--danger);
   margin-left: var(--space-1);
+  order: 1;
+}
+
+/* Keep inline actions (e.g. "Forgot?") right-aligned, after the required marker */
+.form-label-required > a,
+.form-label-required > .btn-link {
+  order: 2;
+  margin-left: auto;
 }
 
 .form-input,
