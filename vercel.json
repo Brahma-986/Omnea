@@ -20,7 +20,7 @@
     "workers": {
       "root": ".",
       "framework": "fastapi",
-      "entrypoint": "services/workers/api/index.py"
+      "entrypoint": "workers_index.py"
     }
   },
   "rewrites": [

@@ -4,8 +4,6 @@ version = "0.1.0"
 description = "FastAPI service for the procurement platform"
 requires-python = ">=3.11"
 dependencies = [
-    "procure-core",
-    "procure-ingress",
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.30.0",
 ]
