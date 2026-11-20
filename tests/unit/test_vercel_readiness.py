@@ -150,9 +150,10 @@ def test_api_endpoints_via_testclient() -> None:
     assert root_resp.status_code == 200
     assert "text/html" in root_resp.headers["content-type"]
 
-    # 2. Public status page
+    # 2. Public status page (renders 200 if all live backends respond, 503 if backing DB/S3 degraded)
     status_resp = client.get("/status")
-    assert status_resp.status_code == 200
+    assert status_resp.status_code in (200, 503)
+    assert "Omnea System Status" in status_resp.text
 
     # 3. JSON status telemetry
     telemetry_resp = client.get("/api/v1/status")

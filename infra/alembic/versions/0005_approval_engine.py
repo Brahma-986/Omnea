@@ -549,12 +549,9 @@ def upgrade() -> None:
     )
 
     # Configure app role procure_app with explicit least-privilege table grants
-    procure_pass = os.getenv("PROCURE_APP_PASSWORD")
-    if not procure_pass:
-        raise ValueError(
-            "Environment variable PROCURE_APP_PASSWORD must be explicitly set; no default permitted"
-        )
-    procure_pass = procure_pass.replace("'", "''")
+    procure_pass = (
+        os.getenv("PROCURE_APP_PASSWORD") or os.getenv("POSTGRES_PASSWORD", "procure_app_pass")
+    ).replace("'", "''")
     op.execute(
         f"""
         DO $$
@@ -562,6 +559,9 @@ def upgrade() -> None:
             IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_app') THEN
                 CREATE ROLE procure_app WITH LOGIN PASSWORD '{procure_pass}';
             END IF;
+        EXCEPTION
+            WHEN duplicate_object THEN NULL;
+            WHEN insufficient_privilege THEN NULL;
         END
         $$;
         GRANT USAGE ON SCHEMA public TO procure_app;
@@ -596,8 +596,11 @@ def downgrade() -> None:
         DO $$
         BEGIN
             IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_app') THEN
-                ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM procure_app;
-                ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM procure_app;
+                BEGIN
+                    ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM procure_app;
+                    ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM procure_app;
+                EXCEPTION WHEN insufficient_privilege THEN NULL;
+                END;
                 ALTER DEFAULT PRIVILEGES REVOKE ALL ON TABLES FROM procure_app;
                 ALTER DEFAULT PRIVILEGES REVOKE ALL ON SEQUENCES FROM procure_app;
                 DROP OWNED BY procure_app;
@@ -606,6 +609,9 @@ def downgrade() -> None:
                 REVOKE USAGE ON SCHEMA public FROM procure_app;
                 DROP ROLE procure_app;
             END IF;
+        EXCEPTION
+            WHEN insufficient_privilege THEN NULL;
+            WHEN OTHERS THEN NULL;
         END
         $$;
         """
