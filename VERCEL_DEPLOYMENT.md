@@ -46,7 +46,14 @@ flowchart TD
 
 ---
 
-## 2. Project Root Directory Configuration
+## 2. Project Configuration & Vercel Services Mode
+
+The repository includes a multi-service `vercel.json` configuring:
+- `app`: Frontend SPA (`framework: fastapi`, `buildCommand: npm run build`, `entrypoint: api/index.py`)
+- `api`: FastAPI Backend (`framework: fastapi`, `entrypoint: api/index.py`, private binding to `workers`)
+- `workers`: Internal background service (`framework: fastapi`, `entrypoint: api/index.py`)
+
+All services explicitly declare `framework: fastapi` to avoid ambiguity with Docker containers.
 
 - **Root Directory**: Leave as `./` (Project Root).
 - Do not set the root directory to `services/api` or `public`. The root directory contains `vercel.json`, `api/index.py`, `package.json`, and all Python workspace modules.
