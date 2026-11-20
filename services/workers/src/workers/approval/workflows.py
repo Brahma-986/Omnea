@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
-from typing import Any
+from typing import Any, Literal, cast
 
 from temporalio import workflow
 from temporalio.common import RetryPolicy
@@ -166,7 +166,7 @@ class ProcurementApprovalWorkflow:
                         float(inp.intent.estimated_spend)
                     ),
                     SearchAttributeKey.for_keyword("VendorId").value_set(
-                        str(inp.intent.vendor_id or inp.intent.vendor_name)
+                        str(getattr(inp.intent, "vendor_id", None) or inp.intent.vendor_name)
                     ),
                     SearchAttributeKey.for_bool("NeedsHuman").value_set(False),
                 ]
@@ -267,9 +267,10 @@ class ProcurementApprovalWorkflow:
 
         verdicts: dict[str, ReviewerVerdict] = {}
         for name, res in zip(["finance", "security", "legal"], raw_results, strict=False):
+            reviewer_role = cast(Literal["finance", "security", "legal"], name)
             if isinstance(res, Exception):
                 verdicts[name] = ReviewerVerdict(
-                    reviewer_type=name,
+                    reviewer_type=reviewer_role,
                     verdict="needs_human",
                     reasons=[
                         f"Fail-closed: Reviewer workflow encountered error: {type(res).__name__}: {str(res)}"
@@ -281,7 +282,7 @@ class ProcurementApprovalWorkflow:
                     verdicts[name] = ReviewerVerdict.model_validate(res)
                 except Exception as e:
                     verdicts[name] = ReviewerVerdict(
-                        reviewer_type=name,
+                        reviewer_type=reviewer_role,
                         verdict="needs_human",
                         reasons=[f"Fail-closed on unparseable verdict payload: {str(e)}"],
                         suggested_assignee=f"{name}_lead",

@@ -315,7 +315,7 @@ class LedgerErpConnector(ErpConnector):
                     .values(status="cancelled")
                 )
                 res = await session.execute(stmt)
-                if res.rowcount == 0:
+                if getattr(res, "rowcount", 0) == 0:
                     return False
 
                 # Void associated commitments

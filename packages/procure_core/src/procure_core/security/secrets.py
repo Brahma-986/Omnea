@@ -162,7 +162,10 @@ class EncryptedFileSecretsManager:
             ciphertext = raw_payload[12:]
             decrypted = self._aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
             try:
-                return json.loads(decrypted)
+                res = json.loads(decrypted)
+                if isinstance(res, dict):
+                    return res
+                return str(res)
             except Exception:
                 return decrypted
         except Exception as exc:

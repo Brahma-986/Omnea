@@ -254,6 +254,10 @@ class ContractModel(Base):
 
     vendor: Mapped[VendorModel] = relationship("VendorModel", back_populates="contracts")
 
+    @property
+    def effective_date(self) -> date:
+        return self.start_date
+
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_contracts_tenant_id"),
         ForeignKeyConstraint(
@@ -295,6 +299,22 @@ class VendorSecurityReviewModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    @property
+    def sha256_hash(self) -> str:
+        return self.sha256 or ""
+
+    @property
+    def original_filename(self) -> str:
+        return str((self.metadata_ or {}).get("filename", "document.pdf"))
+
+    @property
+    def pipeline_status(self) -> str:
+        return self.status
+
+    @property
+    def is_quarantined(self) -> bool:
+        return self.status == "quarantined"
 
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_security_reviews_tenant_id"),
@@ -368,6 +388,18 @@ class TprmControlFindingModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    @property
+    def is_verified(self) -> bool:
+        return self.verified
+
+    @property
+    def confidence_score(self) -> float:
+        val = (self.details or {}).get("confidence_score", 1.0)
+        try:
+            return float(val)
+        except Exception:
+            return 1.0
 
     __table_args__ = (
         ForeignKeyConstraint(

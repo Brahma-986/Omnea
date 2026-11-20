@@ -46,6 +46,7 @@ from procure_agents.llm.spend_cap import LLMSpendBudgetExceededError
 from procure_core.config import get_settings
 from procure_core.db import dispose_async_engine
 from procure_core.log_config import get_logger, request_id_ctx, setup_logging, tenant_id_ctx
+from procure_core.security.tokens import decode_access_token
 from workers.approval.slack_interactions import slack_router
 
 logger = get_logger(__name__)
@@ -162,8 +163,33 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         req_id = request.headers.get("x-request-id") or str(uuid.uuid4())
         token_req = request_id_ctx.set(req_id)
-        # Context tenant is set strictly from verified token claims on authenticated routes
-        token_tenant = tenant_id_ctx.set(None)
+        # Pre-extract verified tenant from JWT or cookie if provided
+        initial_tenant: str | None = None
+        auth_hdr = request.headers.get("Authorization") or request.headers.get("authorization")
+        if auth_hdr and auth_hdr.startswith("Bearer "):
+            raw_t = auth_hdr.removeprefix("Bearer ").strip()
+            if raw_t.count(".") == 2:
+                try:
+                    payload = decode_access_token(raw_t)
+                    t = payload.get("tenant_id")
+                    if t and isinstance(t, str) and t.strip():
+                        initial_tenant = t.strip()
+                except Exception:
+                    pass
+        elif not initial_tenant:
+            for c_key in ("access_token", "auth_token", "token"):
+                c_val = request.cookies.get(c_key)
+                if c_val and c_val.count(".") == 2:
+                    try:
+                        payload = decode_access_token(c_val)
+                        t = payload.get("tenant_id")
+                        if t and isinstance(t, str) and t.strip():
+                            initial_tenant = t.strip()
+                            break
+                    except Exception:
+                        pass
+
+        token_tenant = tenant_id_ctx.set(initial_tenant)
         try:
             response = await call_next(request)
             response.headers["x-request-id"] = req_id

@@ -13,12 +13,11 @@ class Base(DeclarativeBase):
 
 
 class TenantMixin:
-    """Tenant isolation mixin."""
+    """Tenant isolation mixin enforcing explicit verified tenant_id."""
 
     tenant_id: Mapped[str] = mapped_column(
         String(64),
         nullable=False,
-        default="tenant_default",
         index=True,
     )
 

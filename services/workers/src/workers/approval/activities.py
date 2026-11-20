@@ -326,7 +326,7 @@ async def release_budget_activity(
                 ),
                 {"tenant_id": tenant_id, "req_id": req_uuid, "round": round_num},
             )
-            return bool(res.rowcount and res.rowcount > 0)
+            return bool(getattr(res, "rowcount", 0) > 0)
 
 
 # Test-only fault injection gate (evaluated dynamically at runtime)
@@ -604,7 +604,7 @@ async def post_slack_notification_activity(
         )
         if existing_ts:
             # On retry: message was already initiated/posted. Return existing ts (in-place update)
-            return existing_ts
+            return str(existing_ts)
 
     global _SLACK_POST_CALL_COUNT
     _SLACK_POST_CALL_COUNT += 1

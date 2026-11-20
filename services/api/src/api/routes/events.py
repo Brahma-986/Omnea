@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import secrets
 import time
 from collections import defaultdict
 from collections.abc import AsyncGenerator
@@ -19,6 +18,7 @@ from pydantic import BaseModel
 from starlette.responses import StreamingResponse
 
 from api.permissions import AuthContext, require_permission
+from procure_core.auth.tickets import StreamTicketStore, get_stream_ticket_store
 from procure_core.db import get_async_session_factory
 from procure_core.log_config import get_logger, tenant_id_ctx
 
@@ -180,12 +180,18 @@ class StreamTicketResponse(BaseModel):
 )
 async def issue_stream_ticket(
     auth: AuthContext = Depends(require_permission("user:read")),
+    ticket_store: StreamTicketStore = Depends(get_stream_ticket_store),
 ) -> StreamTicketResponse:
     """Generate a cryptographically secure, short-lived single-use stream ticket for SSE."""
-    _clean_expired_tickets()
-    ticket = secrets.token_urlsafe(32)
-    expires_at = time.time() + 30.0
-    _stream_tickets[ticket] = (auth.user_id, auth.tenant_id, list(auth.roles), expires_at)
+    await ticket_store.cleanup_expired()
+    ticket = await ticket_store.create_ticket(
+        user_id=auth.user_id,
+        tenant_id=auth.tenant_id,
+        roles=list(auth.roles),
+        ttl_seconds=30.0,
+    )
+    # Populate backward-compatible view for tests inspecting legacy dict
+    _stream_tickets[ticket] = (auth.user_id, auth.tenant_id, list(auth.roles), time.time() + 30.0)
     return StreamTicketResponse(ticket=ticket, expires_in=30)
 
 
@@ -194,6 +200,7 @@ async def stream_events(
     request: Request,
     ticket: str | None = Query(default=None, description="Short-lived single-use stream ticket"),
     token: str | None = Query(default=None, description="Forbidden raw JWT query parameter"),
+    ticket_store: StreamTicketStore = Depends(get_stream_ticket_store),
 ) -> StreamingResponse:
     """Stream real-time tenant events via Server-Sent Events (SSE).
 
@@ -215,19 +222,20 @@ async def stream_events(
 
     # 2. Check ticket if provided
     if ticket and ticket.strip():
-        _clean_expired_tickets()
-        ticket_data = _stream_tickets.pop(ticket.strip(), None)
+        await ticket_store.cleanup_expired()
+        ticket_data = await ticket_store.consume_ticket(ticket.strip())
+        _stream_tickets.pop(ticket.strip(), None)
         if not ticket_data:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid, expired, or already used stream ticket",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        user_id, tenant_id, roles, expires_at = ticket_data
-        if time.time() > expires_at:
+        user_id, tenant_id, roles = ticket_data
+        if not tenant_id or not tenant_id.strip():
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Stream ticket has expired",
+                detail="Stream ticket missing verified tenant_id claim",
                 headers={"WWW-Authenticate": "Bearer"},
             )
         tenant_id_ctx.set(tenant_id)

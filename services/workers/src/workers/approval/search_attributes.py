@@ -12,6 +12,8 @@ Defines the 7 standard enterprise visibility attributes for Procurement Workflow
 
 from __future__ import annotations
 
+from typing import Any
+
 from temporalio.api.enums.v1 import IndexedValueType
 from temporalio.api.operatorservice.v1 import (
     AddSearchAttributesRequest,
@@ -45,7 +47,7 @@ async def preflight_check_search_attributes(
         resp = await client.operator_service.list_search_attributes(
             ListSearchAttributesRequest(namespace=namespace)
         )
-        existing_custom = resp.custom_attributes
+        existing_custom: Any = resp.custom_attributes
     except Exception as e:
         logger.warning(f"Could not list search attributes via OperatorService: {e}")
         existing_custom = {}

@@ -167,5 +167,6 @@ class RealSlackClient:
             data = res.json()
             if data.get("ok"):
                 profile = data.get("user", {}).get("profile", {})
-                return profile.get("email")
+                email = profile.get("email")
+                return str(email) if email else None
             return None

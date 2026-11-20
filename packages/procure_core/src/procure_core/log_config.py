@@ -18,10 +18,34 @@ tenant_id_ctx: ContextVar[str | None] = ContextVar("tenant_id_ctx", default=None
 REDACTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # JWT tokens (starts with eyJ..., 3 base64url segments separated by dots)
     (re.compile(r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]+"), "[REDACTED]"),
-    # Sensitive URL query parameters (token=..., ticket=..., key=..., password=..., secret=...)
+    # Sensitive URL query parameters (token=..., ticket=..., key=..., password=..., secret=..., refresh_token=...)
     (
         re.compile(
-            r"([?&](?:token|ticket|api_key|apiKey|key|secret|password|authorization)=)[^&\s\"'>]+",
+            r"([?&](?:token|ticket|api_key|apiKey|key|secret|password|authorization|refresh_token|refreshToken)=)[^&\s\"'>]+",
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]",
+    ),
+    # Refresh tokens in key-value, header, or JSON contexts
+    (
+        re.compile(
+            r"([\"']?(?:refresh_token|refreshToken)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,;]+([\"']?)",
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]\2",
+    ),
+    # Sensitive cookie values (access_token, refresh_token, session, csrf_token)
+    (
+        re.compile(
+            r"((?:access_token|refresh_token|session|session_id|csrf_token)=)[^;\s\"'>]+",
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]",
+    ),
+    # Cookie or Set-Cookie header lines
+    (
+        re.compile(
+            r"((?:Cookie|Set-Cookie)\s*:\s*(?:.*?(?:access_token|refresh_token|token|session|secret)=))[^;\r\n]+",
             re.IGNORECASE,
         ),
         r"\1[REDACTED]",
@@ -29,14 +53,15 @@ REDACTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # Authorization headers with Bearer, Basic, or raw credential value
     (
         re.compile(
-            r"((?:Authorization|authorization)\s*[:=]\s*(?:Bearer\s+|Basic\s+)?)[^\s,]+",
+            r"((?:Authorization|authorization)\s*[:=]\s*(?:Bearer\s+|Basic\s+)?)[^\s,;\r\n]+",
             re.IGNORECASE,
         ),
         r"\1[REDACTED]",
     ),
+    # X-API-Key and API-Key headers (supporting arbitrary non-JWT API keys)
     (
         re.compile(
-            r"((?:x-api-key|X-API-Key)\s*[:=]\s*)[^\s,]+",
+            r"((?:x-api-key|X-API-Key|api-key)\s*[:=]\s*)[^\s,;\r\n]+",
             re.IGNORECASE,
         ),
         r"\1[REDACTED]",
@@ -46,6 +71,8 @@ REDACTION_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\b(Basic\s+)[A-Za-z0-9._~+/-]+=*", re.IGNORECASE), r"\1[REDACTED]"),
     # Omnea API keys (omnea_...)
     (re.compile(r"omnea_[A-Za-z0-9_]{16,}"), "[REDACTED]"),
+    # Generic secret keys (e.g. sk_live_..., sk_test_...)
+    (re.compile(r"\b(sk_(?:live|test)_[A-Za-z0-9_]{16,})\b"), "[REDACTED]"),
 ]
 
 

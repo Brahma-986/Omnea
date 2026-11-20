@@ -51,15 +51,15 @@ class RequestModel(Base, TenantMixin, TimestampMixin):
 
     @property
     def currency(self) -> str:
-        return (self.payload or {}).get("currency", "USD")
+        return str((self.payload or {}).get("currency", "USD"))
 
     @property
     def vendor_name(self) -> str:
-        return (self.payload or {}).get("vendor_name", "Vendor")
+        return str((self.payload or {}).get("vendor_name", "Vendor"))
 
     @property
     def department(self) -> str:
-        return (self.payload or {}).get("department", "Engineering")
+        return str((self.payload or {}).get("department", "Engineering"))
 
 
 class ApprovalModel(Base, TenantMixin, TimestampMixin):
