@@ -637,9 +637,11 @@ async def refresh(
 @router.post("/forgot-password")
 async def forgot_password(
     payload: ForgotPasswordRequest,
+    request: Request,
     session: AsyncSession = Depends(get_async_session),
 ) -> dict[str, str]:
     """Dispatch password reset link if email exists without leaking account enumeration."""
+    base_url = (get_settings().FRONTEND_URL or str(request.base_url)).rstrip("/")
     normalized_email = payload.email.strip().lower()
     stmt = select(UserModel).where(
         UserModel.email == normalized_email, UserModel.is_active.is_(True)
@@ -656,12 +658,23 @@ async def forgot_password(
         )
         session.add(reset_rec)
 
+        reset_link = f"{base_url}/#/reset-password?token={raw_token}"
         email_sender = get_email_sender()
         await email_sender.send_email(
             to=u.email,
             subject="Omnea Password Reset",
-            html_content=f"<p>Reset your password using token: <code>{raw_token}</code></p>",
-            text_content=f"Reset your password using token: {raw_token}",
+            html_content=(
+                "<p>We received a request to reset your Omnea password.</p>"
+                f'<p><a href="{reset_link}">Reset your password</a></p>'
+                "<p>Or paste this token on the reset page: "
+                f"<code>{raw_token}</code></p>"
+                "<p>This link expires in 2 hours. If you didn't request it, ignore this email.</p>"
+            ),
+            text_content=(
+                f"Reset your Omnea password: {reset_link}\n\n"
+                f"Or paste this token on the reset page: {raw_token}\n\n"
+                "This link expires in 2 hours. If you didn't request it, ignore this email."
+            ),
         )
 
         await AuditHashChainManager.append_entry(

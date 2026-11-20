@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from typing import Protocol, runtime_checkable
 
+import httpx
+
 from procure_core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -42,14 +44,40 @@ class ResendEmailSender:
         html_content: str,
         text_content: str | None = None,
     ) -> bool:
-        _ = (html_content, text_content)
-        if not self.api_key:
+        if not self.api_key or self.api_key.startswith("re_placeholder"):
             logger.warning(
                 "Resend not connected: Missing RESEND_API_KEY. "
                 "Feature degraded safely; email not dispatched."
             )
             return False
-        logger.info("Resend dispatching email to %s (subject: %s)", to, subject)
+
+        payload: dict[str, object] = {
+            "from": get_settings().EMAIL_FROM_ADDRESS,
+            "to": [to],
+            "subject": subject,
+            "html": html_content,
+        }
+        if text_content:
+            payload["text"] = text_content
+
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {self.api_key}"},
+                    json=payload,
+                )
+        except httpx.HTTPError as exc:
+            logger.error("Resend request failed for %s: %s", to, exc)
+            return False
+
+        if resp.status_code >= 400:
+            logger.error(
+                "Resend rejected email to %s (HTTP %s): %s", to, resp.status_code, resp.text[:500]
+            )
+            return False
+
+        logger.info("Resend sent email to %s (subject: %s)", to, subject)
         return True
 
 
