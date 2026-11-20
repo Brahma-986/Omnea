@@ -5,7 +5,7 @@ version: "1"
 databases:
   - name: omnea-postgres
     databaseName: procure_os
-    user: postgres
+    user: procure_admin
     region: oregon
     plan: starter
     postgresMajorVersion: "16"
