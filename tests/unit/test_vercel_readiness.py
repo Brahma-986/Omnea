@@ -41,9 +41,8 @@ def test_vercel_json_configuration() -> None:
         services = cfg["services"]
         assert "app" in services or "web" in services
         app_svc = services.get("app") or services.get("web", {})
-        assert app_svc.get("outputDirectory") == "public"
-        assert app_svc.get("framework") == "fastapi", (
-            "Must explicitly specify framework to avoid Container/FastAPI ambiguity"
+        assert app_svc.get("root") == "public" or app_svc.get("outputDirectory") == "public", (
+            "Frontend app service must target public/ directory for Edge CDN static serving"
         )
         assert services.get("api", {}).get("framework") == "fastapi"
 

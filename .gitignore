@@ -30,15 +30,16 @@ build/
 *.docker.log
 
 # Database / Volumes
-data/
-pgdata/
-neo4j_data/
+/data/
+/pgdata/
+/neo4j_data/
 
 # Test & Runner Logs
 .pytest_uvicorn_*.log
 *.log
 lighthouse_accessibility.json
-storage/
+/storage/
+services/api/src/storage/
 desktop/dist/
 desktop/node_modules/
 node_modules/

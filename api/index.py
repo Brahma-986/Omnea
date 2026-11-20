@@ -28,6 +28,14 @@ for d in WORKSPACE_DIRS:
     if d_str not in sys.path:
         sys.path.insert(0, d_str)
 
+# If 'api' was loaded as a namespace package from this directory, extend its __path__
+# to include the real package source in services/api/src/api
+import api  # noqa: E402
+
+api_pkg_dir = str(ROOT_DIR / "services" / "api" / "src" / "api")
+if hasattr(api, "__path__") and api_pkg_dir not in api.__path__:
+    api.__path__.append(api_pkg_dir)
+
 # Import the FastAPI ASGI application instance
 from api.main import app  # noqa: E402
 

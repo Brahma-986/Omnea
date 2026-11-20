@@ -1,0 +1,16 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Testing and linters
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+
+# Desktop and Electron
+desktop/
+node_modules/
