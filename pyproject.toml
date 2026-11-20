@@ -114,7 +114,7 @@ addopts = "-ra -q --strict-markers -m \"not llm\" --timeout=30"
 timeout = 30
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-testpaths = ["tests"]
+testpaths = ["tests/unit", "tests/eval"]
 pythonpath = [
     "packages/procure_core/src",
     "packages/procure_ingress/src",
