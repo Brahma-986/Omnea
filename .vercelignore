@@ -14,3 +14,7 @@ tests/
 # Desktop and Electron
 desktop/
 node_modules/
+
+# Use requirements.txt on Vercel (workspace packages load from source via index.py)
+/pyproject.toml
+/uv.lock

@@ -18,9 +18,9 @@
       ]
     },
     "workers": {
-      "root": ".",
+      "root": "deploy/workers",
       "framework": "fastapi",
-      "entrypoint": "workers_index.py"
+      "entrypoint": "index.py"
     }
   },
   "rewrites": [
@@ -28,6 +28,30 @@
       "source": "/api/(.*)",
       "destination": {
         "service": "api"
+      }
+    },
+    {
+      "source": "/auth/(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/invitations(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/admin/(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/static/(.*)",
+      "destination": {
+        "service": "app"
       }
     },
     {
