@@ -127,6 +127,16 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = Field(default="")
     MICROSOFT_CLIENT_ID: str = Field(default="")
     MICROSOFT_CLIENT_SECRET: str = Field(default="")
+
+    # Vercel Services Private Bindings
+    WORKERS_URL: str | None = Field(
+        default=None,
+        description="Private internal URL for workers service injected by Vercel service binding",
+    )
+    API_URL: str | None = Field(
+        default=None,
+        description="Private internal URL for api service injected by Vercel service binding",
+    )
     ALLOWED_ATTACHMENT_TYPES: list[str] = Field(
         default=[
             "application/pdf",

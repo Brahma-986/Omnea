@@ -1,40 +1,70 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "functions": {
-    "api/index.py": {
-      "maxDuration": 10,
-      "memory": 1024
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "buildCommand": "npm run build",
+      "outputDirectory": "public"
+    },
+    "api": {
+      "root": ".",
+      "entrypoint": "api/index.py",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "workers",
+          "format": "url",
+          "env": "WORKERS_URL"
+        }
+      ]
+    },
+    "workers": {
+      "root": "services/workers",
+      "runtime": "python"
     }
   },
   "rewrites": [
     {
-      "source": "/(api|auth|health|status|invitations|docs|openapi.json)(.*)",
-      "destination": "/api/index.py"
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "api"
+      }
     },
     {
-      "source": "/app(.*)",
-      "destination": "/index.html"
+      "source": "/health",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/status",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/events/(.*)",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/docs",
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/openapi.json",
+      "destination": {
+        "service": "api"
+      }
     },
     {
       "source": "/(.*)",
-      "destination": "/$1"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    },
-    {
-      "source": "/static/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
+      "destination": {
+        "service": "app"
+      }
     }
   ]
 }

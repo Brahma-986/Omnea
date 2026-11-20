@@ -35,25 +35,47 @@ def test_vercel_json_configuration() -> None:
     assert vercel_path.exists(), "vercel.json must exist at project root"
 
     cfg = json.loads(vercel_path.read_text(encoding="utf-8"))
-    assert cfg.get("buildCommand") == "npm run build"
-    assert cfg.get("outputDirectory") == "public"
 
-    rewrites = cfg.get("rewrites", [])
-    assert len(rewrites) >= 2
+    # Support either top-level (standard) or services-level (multi-service) configuration
+    if "services" in cfg:
+        services = cfg["services"]
+        assert "app" in services or "web" in services
+        app_svc = services.get("app") or services.get("web", {})
+        assert app_svc.get("outputDirectory") == "public"
 
-    # Verify API rewrites route to api/index.py
-    api_rewrite = next(
-        (r for r in rewrites if "api/index.py" in r.get("destination", "")),
-        None,
-    )
-    assert api_rewrite is not None, "Must have rewrite pointing to api/index.py"
+        rewrites = cfg.get("rewrites", [])
+        assert len(rewrites) >= 2
 
-    # Verify SPA rewrites route to /index.html
-    spa_rewrite = next(
-        (r for r in rewrites if "/index.html" in r.get("destination", "")),
-        None,
-    )
-    assert spa_rewrite is not None, "Must have rewrite pointing to /index.html"
+        api_rewrite = next(
+            (
+                r
+                for r in rewrites
+                if r.get("destination") == {"service": "api"}
+                or "api/index.py" in str(r.get("destination", ""))
+            ),
+            None,
+        )
+        assert api_rewrite is not None, "Must have rewrite pointing to api service"
+    else:
+        assert cfg.get("buildCommand") == "npm run build"
+        assert cfg.get("outputDirectory") == "public"
+
+        rewrites = cfg.get("rewrites", [])
+        assert len(rewrites) >= 2
+
+        # Verify API rewrites route to api/index.py
+        api_rewrite = next(
+            (r for r in rewrites if "api/index.py" in str(r.get("destination", ""))),
+            None,
+        )
+        assert api_rewrite is not None, "Must have rewrite pointing to api/index.py"
+
+        # Verify SPA rewrites route to /index.html
+        spa_rewrite = next(
+            (r for r in rewrites if "/index.html" in str(r.get("destination", ""))),
+            None,
+        )
+        assert spa_rewrite is not None, "Must have rewrite pointing to /index.html"
 
 
 def test_public_static_assets_built() -> None:
