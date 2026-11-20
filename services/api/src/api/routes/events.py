@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from collections import defaultdict
 from collections.abc import AsyncGenerator
@@ -133,8 +134,19 @@ async def sse_event_generator(
 
         ping_interval = 1.0 if get_settings().APP_ENV in ("test", "development") else 15.0
         disconnect_task = asyncio.create_task(request.is_disconnected())
+        is_serverless = os.getenv("VERCEL") == "1" or os.getenv("SERVERLESS", "").lower() in (
+            "1",
+            "true",
+            "yes",
+        )
+        serverless_max_sec = 8.0 if is_serverless else None
+        stream_start = time.time()
         try:
             while True:
+                if serverless_max_sec and (time.time() - stream_start) >= serverless_max_sec:
+                    # Clean EOF close on serverless before gateway timeout; client auto-reconnects
+                    break
+
                 get_task = asyncio.create_task(queue.get())
                 done, pending = await asyncio.wait(
                     [disconnect_task, get_task],

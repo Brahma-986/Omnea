@@ -1,0 +1,11 @@
+{
+  "name": "omnea-platform",
+  "version": "0.1.0",
+  "description": "AI-Native Procurement Orchestration Platform",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build-frontend.js",
+    "test": "node --test"
+  },
+  "devDependencies": {}
+}

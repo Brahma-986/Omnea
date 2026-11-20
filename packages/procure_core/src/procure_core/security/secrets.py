@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
@@ -85,8 +86,20 @@ class EncryptedFileSecretsManager:
         self, storage_dir: str | Path | None = None, master_key: bytes | None = None
     ) -> None:
         settings = get_settings()
-        self.storage_dir = Path(storage_dir or "storage/secrets")
-        self.storage_dir.mkdir(parents=True, exist_ok=True)
+        if storage_dir:
+            self.storage_dir = Path(storage_dir)
+        elif os.getenv("SECRETS_STORAGE_DIR"):
+            self.storage_dir = Path(os.environ["SECRETS_STORAGE_DIR"])
+        elif os.getenv("VERCEL") == "1" or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+            self.storage_dir = Path(tempfile.gettempdir()) / "omnea_secrets"
+        else:
+            self.storage_dir = Path("storage/secrets")
+
+        try:
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
+        except OSError:
+            self.storage_dir = Path(tempfile.gettempdir()) / "omnea_secrets"
+            self.storage_dir.mkdir(parents=True, exist_ok=True)
 
         # Derive 256-bit AES key from JWT_SECRET_KEY or provided master key
         if master_key:

@@ -122,8 +122,8 @@ class ResilientLLMClient:
                     "timeout": self.timeout,
                     "temperature": effective_temp,
                 }
-                if self.settings.LLM_API_KEY:
-                    kwargs["api_key"] = self.settings.LLM_API_KEY
+                if self.settings.effective_llm_api_key:
+                    kwargs["api_key"] = self.settings.effective_llm_api_key
                 if self.settings.LLM_API_BASE:
                     kwargs["api_base"] = self.settings.LLM_API_BASE
 
@@ -246,8 +246,8 @@ class ResilientLLMClient:
             "timeout": self.timeout,
             "temperature": effective_temp,
         }
-        if self.settings.LLM_API_KEY:
-            kwargs["api_key"] = self.settings.LLM_API_KEY
+        if self.settings.effective_llm_api_key:
+            kwargs["api_key"] = self.settings.effective_llm_api_key
         if self.settings.LLM_API_BASE:
             kwargs["api_base"] = self.settings.LLM_API_BASE
 

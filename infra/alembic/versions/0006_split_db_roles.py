@@ -39,21 +39,40 @@ def upgrade() -> None:
 
     op.execute(
         f"""
-        -- 1. Create Roles if not existing
+        -- 1. Create Roles if not existing (wrapped in exception block for managed cloud DBs)
         DO $$
         BEGIN
-            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_admin') THEN
-                CREATE ROLE procure_admin WITH LOGIN PASSWORD '{admin_pass}' NOSUPERUSER;
-            END IF;
-            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_workflow') THEN
-                CREATE ROLE procure_workflow WITH LOGIN PASSWORD '{wf_pass}';
-            END IF;
-            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_reviewer') THEN
-                CREATE ROLE procure_reviewer WITH LOGIN PASSWORD '{rev_pass}';
-            END IF;
-            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_ingest') THEN
-                CREATE ROLE procure_ingest WITH LOGIN PASSWORD '{ingest_pass}';
-            END IF;
+            BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_admin') THEN
+                    CREATE ROLE procure_admin WITH LOGIN PASSWORD '{admin_pass}' NOSUPERUSER;
+                END IF;
+            EXCEPTION WHEN insufficient_privilege OR duplicate_object THEN
+                NULL;
+            END;
+
+            BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_workflow') THEN
+                    CREATE ROLE procure_workflow WITH LOGIN PASSWORD '{wf_pass}';
+                END IF;
+            EXCEPTION WHEN insufficient_privilege OR duplicate_object THEN
+                NULL;
+            END;
+
+            BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_reviewer') THEN
+                    CREATE ROLE procure_reviewer WITH LOGIN PASSWORD '{rev_pass}';
+                END IF;
+            EXCEPTION WHEN insufficient_privilege OR duplicate_object THEN
+                NULL;
+            END;
+
+            BEGIN
+                IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_ingest') THEN
+                    CREATE ROLE procure_ingest WITH LOGIN PASSWORD '{ingest_pass}';
+                END IF;
+            EXCEPTION WHEN insufficient_privilege OR duplicate_object THEN
+                NULL;
+            END;
         END
         $$;
 
@@ -104,20 +123,32 @@ def upgrade() -> None:
         REVOKE DELETE, TRUNCATE ON ALL TABLES IN SCHEMA public FROM procure_ingest;
         GRANT DELETE ON inbound_event_queue TO procure_ingest;
 
-        -- 7. Drop legacy procure_app role cleanly
+        -- 7. Drop legacy procure_app role cleanly if permitted
         DO $$
         BEGIN
             IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'procure_app') THEN
-                ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM procure_app;
-                ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM procure_app;
-                ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM procure_app;
-                REVOKE ALL PRIVILEGES ON SCHEMA public FROM procure_app;
-                REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM procure_app;
-                REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM procure_app;
-                REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM procure_app;
-                REASSIGN OWNED BY procure_app TO postgres;
-                DROP OWNED BY procure_app;
-                DROP ROLE procure_app;
+                BEGIN
+                    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
+                        BEGIN
+                            ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON TABLES FROM procure_app;
+                            ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON SEQUENCES FROM procure_app;
+                            ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM procure_app;
+                        EXCEPTION WHEN OTHERS THEN
+                            NULL;
+                        END;
+                    END IF;
+                    REVOKE ALL PRIVILEGES ON SCHEMA public FROM procure_app;
+                    REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM procure_app;
+                    REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM procure_app;
+                    REVOKE ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public FROM procure_app;
+                    IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'postgres') THEN
+                        REASSIGN OWNED BY procure_app TO postgres;
+                    END IF;
+                    DROP OWNED BY procure_app;
+                    DROP ROLE procure_app;
+                EXCEPTION WHEN OTHERS THEN
+                    NULL;
+                END;
             END IF;
         END
         $$;

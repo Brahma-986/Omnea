@@ -71,7 +71,7 @@ def create_access_token(
 
     return jwt.encode(
         payload,
-        settings.JWT_SECRET_KEY,
+        settings.effective_jwt_secret_key,
         algorithm=settings.JWT_ALGORITHM,
     )
 
@@ -85,7 +85,7 @@ def decode_access_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     payload = jwt.decode(
         token,
-        settings.JWT_SECRET_KEY,
+        settings.effective_jwt_secret_key,
         algorithms=[settings.JWT_ALGORITHM],
         options={"require": ["exp", "sub", "tenant_id", "iat"]},
     )

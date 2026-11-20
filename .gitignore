@@ -13,7 +13,12 @@ build/
 
 # Environment & Secrets
 .env
+.env.*
+!.env.example
 *.local.env
+
+# Vercel
+.vercel/
 
 # IDE
 .idea/

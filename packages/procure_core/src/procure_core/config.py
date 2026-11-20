@@ -1,5 +1,6 @@
 """Application configuration powered by pydantic-settings."""
 
+import re
 from functools import lru_cache
 from typing import Literal
 
@@ -33,6 +34,18 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = Field(default="localhost")
     POSTGRES_PORT: int = Field(default=5432)
     POSTGRES_DB: str = Field(default="procure_os")
+    DATABASE_URL: str | None = Field(
+        default=None,
+        description="Full PostgreSQL connection URL (e.g. from Supabase, Neon, or Vercel Postgres)",
+    )
+    POSTGRES_URL: str | None = Field(
+        default=None,
+        description="Alias for DATABASE_URL as commonly injected by Vercel Postgres",
+    )
+    DB_SERVERLESS_POOL: bool = Field(
+        default=False,
+        description="Force NullPool for serverless environments (Vercel / AWS Lambda)",
+    )
 
     # Neo4j
     NEO4J_URI: str = Field(default="bolt://localhost:7687")
@@ -45,6 +58,7 @@ class Settings(BaseSettings):
 
     # Object Storage (S3 / MinIO)
     S3_ENDPOINT_URL: str = Field(default="http://localhost:9000")
+    S3_ENDPOINT: str | None = Field(default=None, description="Alias for S3_ENDPOINT_URL")
     S3_ACCESS_KEY_ID: str = Field(default="minioadmin")
     S3_SECRET_ACCESS_KEY: str = Field(default="minioadmin")
     S3_REGION_NAME: str = Field(default="us-east-1")
@@ -66,6 +80,7 @@ class Settings(BaseSettings):
     # LLM & Extraction Settings
     LLM_MODEL: str = Field(default="gemini/gemini-1.5-flash")
     LLM_API_KEY: str = Field(default="")
+    GEMINI_API_KEY: str | None = Field(default=None, description="Alias for LLM_API_KEY")
     LLM_API_BASE: str | None = Field(default=None)
     LLM_MAX_TOKENS: int = Field(default=1024)
     LLM_TIMEOUT_SECONDS: float = Field(default=45.0)
@@ -80,6 +95,9 @@ class Settings(BaseSettings):
 
     # Authentication & JWT
     JWT_SECRET_KEY: str = Field(default="test_jwt_secret_key_change_in_production_min32bytes")
+    JWT_SECRET: str | None = Field(default=None, description="Alias for JWT_SECRET_KEY")
+    CORS_ORIGINS: str | None = Field(default=None, description="Comma-separated allowed origins")
+    FRONTEND_URL: str | None = Field(default=None, description="Deployed frontend URL")
     JWT_ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15)
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7)
@@ -125,8 +143,42 @@ class Settings(BaseSettings):
     )
 
     @property
+    def effective_llm_api_key(self) -> str:
+        """Effective LLM API key, accepting GEMINI_API_KEY as an alias."""
+        return self.LLM_API_KEY or self.GEMINI_API_KEY or ""
+
+    @property
+    def effective_jwt_secret_key(self) -> str:
+        """Effective JWT secret key, accepting JWT_SECRET as an alias."""
+        return self.JWT_SECRET or self.JWT_SECRET_KEY
+
+    @property
+    def effective_s3_endpoint_url(self) -> str:
+        """Effective S3 endpoint URL, accepting S3_ENDPOINT as an alias."""
+        return self.S3_ENDPOINT or self.S3_ENDPOINT_URL
+
+    @property
     def async_database_url(self) -> str:
-        """SQLAlchemy async database connection string using asyncpg."""
+        """SQLAlchemy async database connection string using asyncpg.
+
+        Supports full connection strings from Supabase, Neon, and Vercel Postgres,
+        automatically adapting schemas and ssl parameters.
+        """
+        raw_url = self.DATABASE_URL or self.POSTGRES_URL
+        if raw_url:
+            url = raw_url.strip()
+            if url.startswith("postgres://"):
+                url = "postgresql+asyncpg://" + url[len("postgres://") :]
+            elif url.startswith("postgresql://"):
+                url = "postgresql+asyncpg://" + url[len("postgresql://") :]
+            elif not url.startswith("postgresql+asyncpg://"):
+                parts = url.split("://", 1)
+                if len(parts) == 2:
+                    url = f"postgresql+asyncpg://{parts[1]}"
+            if "sslmode=" in url:
+                url = re.sub(r"([?&])sslmode=([a-zA-Z0-9_-]+)", r"\1ssl=\2", url)
+            return url
+
         return (
             f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
@@ -135,6 +187,17 @@ class Settings(BaseSettings):
     @property
     def sync_database_url(self) -> str:
         """SQLAlchemy sync database connection string using psycopg (for Alembic)."""
+        raw_url = self.DATABASE_URL or self.POSTGRES_URL
+        if raw_url:
+            url = raw_url.strip()
+            if url.startswith("postgres://"):
+                url = "postgresql+psycopg://" + url[len("postgres://") :]
+            elif url.startswith("postgresql://"):
+                url = "postgresql+psycopg://" + url[len("postgresql://") :]
+            elif url.startswith("postgresql+asyncpg://"):
+                url = "postgresql+psycopg://" + url[len("postgresql+asyncpg://") :]
+            return url
+
         return (
             f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"

@@ -24,8 +24,8 @@ class S3StorageClient:
             "aws_access_key_id": self.settings.S3_ACCESS_KEY_ID,
             "aws_secret_access_key": self.settings.S3_SECRET_ACCESS_KEY,
         }
-        if self.settings.S3_ENDPOINT_URL:
-            kwargs["endpoint_url"] = self.settings.S3_ENDPOINT_URL
+        if self.settings.effective_s3_endpoint_url:
+            kwargs["endpoint_url"] = self.settings.effective_s3_endpoint_url
         return kwargs
 
     async def ensure_bucket_exists(self, bucket: str | None = None) -> None:

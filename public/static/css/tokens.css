@@ -1,0 +1,214 @@
+/* ==========================================================================
+   Omnea Design System - CSS Tokens (tokens.css)
+   WCAG AA Contrast Compliant Palette (>= 4.5:1 body, >= 3:1 large/icons)
+   Light & Dark Mode Tokens, Typography Scale, Spacing, Shadows, Focus Rings
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Light Mode */
+  --bg-primary: #f8fafc;        /* Slate-50: primary canvas */
+  --bg-surface: #ffffff;        /* White: cards, modals, dropdowns */
+  --bg-subtle: #f1f5f9;         /* Slate-100: table headers, input backgrounds */
+  --bg-elevated: #ffffff;       /* Elevated surfaces */
+  --bg-hover: #e2e8f0;          /* Slate-200 */
+  --bg-active: #cbd5e1;         /* Slate-300 */
+
+  /* Text & Content - Minimum 4.5:1 contrast against surface */
+  --text-primary: #0f172a;      /* Slate-900 (15.6:1 contrast on #ffffff) */
+  --text-secondary: #334155;    /* Slate-700 (9.6:1 contrast on #ffffff) */
+  --text-muted: #64748b;        /* Slate-500 (4.6:1 contrast on #ffffff - WCAG AA) */
+  --text-inverse: #f8fafc;      /* Slate-50 */
+
+  /* Borders & Dividers */
+  --border-subtle: #e2e8f0;     /* Slate-200 */
+  --border-default: #cbd5e1;    /* Slate-300 */
+  --border-strong: #94a3b8;     /* Slate-400 */
+
+  /* Brand / Primary */
+  --brand-primary: #1d4ed8;      /* Blue-700 (5.9:1 on #ffffff - WCAG AA) */
+  --brand-primary-hover: #1e40af;/* Blue-800 */
+  --brand-contrast: #ffffff;    /* 5.9+:1 on Blue-700 */
+  --brand-subtle: #eff6ff;      /* Blue-50 */
+  --brand-border: #bfdbfe;      /* Blue-200 */
+  --tag-color: #1e40af;
+  --tag-bg: #eff6ff;
+  --tag-border: #bfdbfe;
+
+  /* Semantic Feedback (Strict WCAG AA) */
+  --success: #15803d;           /* Green-700 (4.6:1 contrast) */
+  --success-bg: #dcfce7;        /* Green-100 */
+  --success-border: #86efac;     /* Green-300 */
+  --success-text: #14532d;      /* Green-900 */
+
+  --warning: #b45309;           /* Amber-700 (4.8:1 contrast) */
+  --warning-bg: #fef3c7;        /* Amber-100 */
+  --warning-border: #fde68a;    /* Amber-300 */
+  --warning-text: #78350f;      /* Amber-900 */
+
+  --danger: #b91c1c;            /* Red-700 (4.9:1 contrast) */
+  --danger-bg: #fee2e2;         /* Red-100 */
+  --danger-border: #fca5a5;     /* Red-300 */
+  --danger-text: #7f1d1d;       /* Red-900 */
+
+  --info: #0369a1;              /* Sky-700 (4.7:1 contrast) */
+  --info-bg: #e0f2fe;           /* Sky-100 */
+  --info-border: #7dd3fc;       /* Sky-300 */
+  --info-text: #0c4a6e;         /* Sky-900 */
+
+  /* Typography Scale */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --text-xs: 0.75rem;     /* 12px */
+  --text-sm: 0.875rem;    /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;    /* 18px */
+  --text-xl: 1.25rem;     /* 20px */
+  --text-2xl: 1.5rem;     /* 24px */
+  --text-3xl: 1.875rem;   /* 30px */
+  --text-4xl: 2.25rem;    /* 36px */
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  /* Spacing Scale (4px, 8px, 12px, 16px, 20px, 24px, 32px, 40px, 48px, 64px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* Radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+
+  /* Elevation & Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+  --shadow-modal: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+
+  /* Focus Ring (WCAG 2.4.7 Focus Visible compliance) */
+  --focus-ring: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--brand-primary);
+  --focus-ring-danger: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--danger);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Dark Theme Overrides
+   Activated via [data-theme="dark"] attribute on <html> or <body>
+   ========================================================================== */
+[data-theme="dark"] {
+  /* Color Palette - Dark Mode */
+  --bg-primary: #0b0f19;        /* Slate-950: deep navy canvas */
+  --bg-surface: #111827;        /* Gray-900: card and surface background */
+  --bg-subtle: #1e293b;         /* Slate-800: table headers, input background */
+  --bg-elevated: #1f2937;       /* Gray-800: dropdowns and modals */
+  --bg-hover: #334155;          /* Slate-700 */
+  --bg-active: #475569;         /* Slate-600 */
+
+  /* Text & Content */
+  --text-primary: #f8fafc;      /* Slate-50 (16.5:1 contrast on #111827) */
+  --text-secondary: #cbd5e1;    /* Slate-300 (10.3:1 contrast on #111827) */
+  --text-muted: #94a3b8;        /* Slate-400 (5.4:1 contrast on #111827 - WCAG AA) */
+  --text-inverse: #0f172a;      /* Slate-900 */
+
+  /* Borders & Dividers */
+  --border-subtle: #1e293b;     /* Slate-800 */
+  --border-default: #334155;    /* Slate-700 */
+  --border-strong: #475569;     /* Slate-600 */
+
+  /* Brand / Primary */
+  --brand-primary: #1d4ed8;      /* Blue-700 (5.9:1 on #ffffff - WCAG AA) */
+  --brand-primary-hover: #2563eb;/* Blue-600 */
+  --brand-contrast: #ffffff;    /* 5.9:1 on Blue-700 */
+  --brand-subtle: rgba(29, 78, 216, 0.2);
+  --brand-border: #1d4ed8;
+  --tag-color: #93c5fd;         /* Blue-300 (9.4:1 contrast on dark bg) */
+  --tag-bg: rgba(29, 78, 216, 0.2);
+  --tag-border: #1d4ed8;
+
+  /* Semantic Feedback (Strict WCAG AA in Dark Mode) */
+  --success: #22c55e;           /* Green-500 (5.8:1 on #111827) */
+  --success-bg: rgba(34, 197, 94, 0.16);
+  --success-border: #166534;
+  --success-text: #86efac;      /* Green-300 */
+
+  --warning: #f59e0b;           /* Amber-500 (5.7:1 on #111827) */
+  --warning-bg: rgba(245, 158, 11, 0.16);
+  --warning-border: #854d0e;
+  --warning-text: #fde68a;      /* Amber-200 */
+
+  --danger: #ef4444;            /* Red-500 (5.2:1 on #111827) */
+  --danger-bg: rgba(239, 68, 68, 0.16);
+  --danger-border: #991b1b;
+  --danger-text: #fca5a5;       /* Red-300 */
+
+  --info: #38bdf8;              /* Sky-400 (7.8:1 on #111827) */
+  --info-bg: rgba(56, 189, 248, 0.16);
+  --info-border: #0369a1;
+  --info-text: #bae6fd;         /* Sky-200 */
+
+  /* Shadows (Dark Mode) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
+
+  /* Focus Ring (Dark Mode) */
+  --focus-ring: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--brand-primary);
+  --focus-ring-danger: 0 0 0 2px var(--bg-surface), 0 0 0 4px var(--danger);
+}
+
+/* Base Global Reset and Typography */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: var(--leading-normal);
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Global Focus-Visible Rule */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}

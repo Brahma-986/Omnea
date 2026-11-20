@@ -334,19 +334,39 @@ def create_app() -> FastAPI:
             headers={"Retry-After": "3600"},
         )
 
+    # Support both CORS_ORIGINS and CORS_ALLOWED_ORIGINS as well as FRONTEND_URL and VERCEL_URL
+    cors_env = (
+        os.getenv("CORS_ORIGINS")
+        or os.getenv("CORS_ALLOWED_ORIGINS")
+        or settings.CORS_ORIGINS
+        or ""
+    )
+    frontend_url = (os.getenv("FRONTEND_URL") or settings.FRONTEND_URL or "").strip()
+    vercel_url = os.getenv("VERCEL_URL", "").strip()
+    if vercel_url and not vercel_url.startswith("http"):
+        vercel_url = f"https://{vercel_url}"
+
     allowed_origins = [
-        o.strip()
-        for o in os.getenv(
-            "CORS_ALLOWED_ORIGINS",
-            "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000",
-        ).split(",")
-        if o.strip()
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
     ]
+    if frontend_url and frontend_url not in allowed_origins:
+        allowed_origins.append(frontend_url)
+    if vercel_url and vercel_url not in allowed_origins:
+        allowed_origins.append(vercel_url)
+    if cors_env:
+        for origin in cors_env.split(","):
+            clean_origin = origin.strip()
+            if clean_origin and clean_origin not in allowed_origins:
+                allowed_origins.append(clean_origin)
 
     # Middleware stack (wrapped bottom-up, executed top-down on request)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allowed_origins,
+        allow_origin_regex=r"^https://.*\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
         allow_headers=["*"],

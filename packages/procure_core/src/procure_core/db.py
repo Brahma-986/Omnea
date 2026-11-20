@@ -1,5 +1,6 @@
 """Database engine and session management for PostgreSQL."""
 
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -18,17 +19,36 @@ _session_factory: async_sessionmaker[AsyncSession] | None = None
 
 
 def get_async_engine(settings: Settings | None = None) -> AsyncEngine:
-    """Initialize or return the cached async SQLAlchemy engine."""
+    """Initialize or return the cached async SQLAlchemy engine.
+
+    Automatically enables NullPool in serverless execution environments (e.g. Vercel)
+    to prevent connection pool exhaustion across short-lived invocations.
+    """
     global _engine
     if _engine is None:
         cfg = settings or get_settings()
-        _engine = create_async_engine(
-            cfg.async_database_url,
-            pool_pre_ping=True,
-            pool_size=10,
-            max_overflow=20,
-            echo=(cfg.APP_ENV == "development" and cfg.LOG_LEVEL == "DEBUG"),
+        is_serverless = (
+            cfg.DB_SERVERLESS_POOL
+            or os.getenv("VERCEL") == "1"
+            or os.getenv("AWS_LAMBDA_FUNCTION_NAME") is not None
+            or os.getenv("SERVERLESS", "").lower() in ("1", "true", "yes")
         )
+        if is_serverless:
+            from sqlalchemy.pool import NullPool
+
+            _engine = create_async_engine(
+                cfg.async_database_url,
+                poolclass=NullPool,
+                echo=(cfg.APP_ENV == "development" and cfg.LOG_LEVEL == "DEBUG"),
+            )
+        else:
+            _engine = create_async_engine(
+                cfg.async_database_url,
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=20,
+                echo=(cfg.APP_ENV == "development" and cfg.LOG_LEVEL == "DEBUG"),
+            )
     return _engine
 
 
